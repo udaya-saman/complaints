@@ -1,0 +1,16 @@
+{
+  "id":"./",
+  "name":"Customer Complaints Hub",
+  "short_name":"Complaints Hub",
+  "description":"Private, offline-first complaint reporting for Pizza Hut Sri Lanka outlets",
+  "start_url":"./#/overview",
+  "scope":"./",
+  "display":"standalone",
+  "background_color":"#F7F8FA",
+  "theme_color":"#C8102E",
+  "orientation":"any",
+  "icons":[
+    {"src":"./assets/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"./assets/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+  ]
+}

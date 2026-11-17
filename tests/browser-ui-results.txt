@@ -1,0 +1,7 @@
+PASS selected before main startup appears in real Data Library UI
+PASS Analyze → review → save → overview (storage/worker transport mocked)
+PASS complaint search and navigation
+PASS header import works from active dashboard at width 1200
+PASS native Browse files repeat selection at width 1200
+PASS header import works from active dashboard at width 390
+PASS native Browse files repeat selection at width 390

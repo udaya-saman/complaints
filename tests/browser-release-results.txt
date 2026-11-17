@@ -1,0 +1,6 @@
+Core real-workbook run (before expanding the test with synthetic multi-month checks):
+PASS all five desktop tabs before data import
+PASS real browser Worker reads original 68 MB workbook, saves 22 records (21 resolved, 1 pending) through storage stand-in
+PASS all five tabs, status/search/outlet filters, PDF generation, and saved history at width 1250
+PASS all five tabs, status/search/outlet filters, PDF generation, and saved history at width 390
+Expanded real-workbook rerun interrupted by execution time limit. Expanded synthetic run: see browser-release-synthetic-results.txt.

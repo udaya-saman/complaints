@@ -1,0 +1,12 @@
+PASS real browser Worker import + review + save for April
+PASS real browser Worker import + review + save for May
+PASS real browser Worker import + review + save for June
+PASS real browser Worker import + review + save for July
+PASS real browser Worker import + review + save for August
+PASS real browser Worker import + review + save for September
+PASS six months, all five tabs, search, channels, status, outlet alias, trends and PDF at width 1250
+PASS six months, all five tabs, search, channels, status, outlet alias, trends and PDF at width 390
+PASS simplified headers, update subpage, return link, and no page overflow at width 1250
+PASS simplified headers, update subpage, return link, and no page overflow at width 390
+PASS simplified headers, update subpage, return link, and no page overflow at width 320
+PASS backup of all six snapshots

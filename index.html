@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#C8102E">
+  <meta name="description" content="Private offline complaints reporting for Pizza Hut Sri Lanka clusters and outlets.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Complaints Hub">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="./assets/icon-192.png">
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="./styles-2.5.0.css">
+  <title>Customer Complaints Hub · Pizza Hut Sri Lanka</title>
+  <script defer src="./startup-2.5.0.js"></script>
+  <script defer src="./hub-2.5.0.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Main navigation">
+      <a class="brand" href="#/overview" aria-label="Customer Complaints Hub home">
+        <span class="brand-mark" aria-hidden="true">PH</span>
+        <span class="brand-copy"><strong>Complaints Hub</strong></span>
+      </a>
+      <div class="side-label">WORKSPACE</div>
+      <nav id="side-nav" class="side-nav" aria-label="Main sections">
+        <a href="#/overview" data-nav="overview"><span class="nav-symbol" aria-hidden="true">▦</span> Overview</a>
+        <a href="#/complaints" data-nav="complaints"><span class="nav-symbol" aria-hidden="true">☷</span> Complaints <span class="nav-count" id="side-pending"></span></a>
+        <a href="#/trends" data-nav="trends"><span class="nav-symbol" aria-hidden="true">↗</span> Monthly trends</a>
+        <a href="#/reports" data-nav="reports"><span class="nav-symbol" aria-hidden="true">▤</span> PDF reports</a>
+        <a href="#/library" data-nav="library"><span class="nav-symbol" aria-hidden="true">⇧</span> Data library</a>
+      </nav>
+      <div class="side-bottom"><div class="privacy-note"><span class="privacy-pip"></span> Data stays on this device</div><p>PRIVATE · OFFLINE-FIRST<br>VERSION 2.5.0</p></div>
+    </aside>
+    <div class="main-column">
+      <header class="topbar">
+        <div class="breadcrumbs"><span>OPERATIONS</span><span class="crumb-divider">/</span><strong id="page-crumb">Overview</strong></div>
+        <div class="topbar-actions"><span id="connection-status" class="network-label" role="status">Offline-ready</span><label id="import-excel-button" class="btn btn-primary btn-small native-picker"><span aria-hidden="true">＋</span> Import Excel<input id="global-excel-file" type="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-label="Import Excel"></label></div>
+      </header>
+      <main id="main-content" class="content" tabindex="-1"><section class="panel section-card" role="status"><h1>Loading Complaints Hub</h1><p id="startup-message">Starting the dashboard…</p><p>If the dashboard does not open, <a class="text-button" href="./update.html">repair or update the app</a>.</p><noscript>JavaScript is required to analyze Excel files. Enable JavaScript and reload this page.</noscript></section></main>
+      <footer class="main-footer">Customer Complaints Hub <span>·</span> Internal reporting only <span>·</span> Data is stored privately on this device <span>·</span> <a class="text-button" href="#/update">Update / repair app</a> <span>·</span> v2.5.0</footer>
+    </div>
+  </div>
+  <nav class="mobile-nav" aria-label="Mobile navigation">
+    <a data-nav="overview" href="#/overview"><span aria-hidden="true">▦</span>Overview</a>
+    <a data-nav="complaints" href="#/complaints"><span aria-hidden="true">☷</span>Complaints</a>
+    <a data-nav="trends" href="#/trends"><span aria-hidden="true">↗</span>Trends</a>
+    <a data-nav="reports" href="#/reports"><span aria-hidden="true">▤</span>Reports</a>
+    <a data-nav="library" href="#/library"><span aria-hidden="true">⇧</span>Library</a>
+  </nav>
+  <div id="modal-root"></div>
+  <div id="toast-root" role="status" aria-live="polite"></div>
+  <div id="update-banner" class="update-banner hidden" role="status">New version available. <button id="update-now" type="button" class="btn btn-primary btn-small">Refresh app</button></div>
+</body>
+</html>

@@ -1,0 +1,60 @@
+progress 48 Reading sheet 1 of 1 · 559,986 rows scanned
+{
+  "status": "success",
+  "elapsedSeconds": 5.8,
+  "found": 22,
+  "ignored": 4,
+  "reasonCounts": {
+    "unknownOutlet": 4
+  },
+  "duplicate": 0,
+  "dateMismatch": 0,
+  "headerSheets": 1,
+  "missingStatus": 0,
+  "unverified": 0,
+  "missingCoachColumn": false,
+  "unknownOutlets": {
+    "Hikkaduwa": 3,
+    "South Expressway Colombo": 1
+  },
+  "excludedCoaches": {},
+  "mismatches": [],
+  "warnings": [],
+  "ignoredSheets": [],
+  "byStatus": {
+    "resolved": 21,
+    "pending": 1
+  },
+  "byOutlet": {
+    "Matara 2": 4,
+    "Unawatuna": 2,
+    "Tangalle": 4,
+    "Embilipitiya": 3,
+    "Monaragala": 4,
+    "Megalle": 1,
+    "Karapitiya": 1,
+    "Matara": 1,
+    "Ambalangoda": 1,
+    "Galle": 1
+  },
+  "examples": [
+    {
+      "outlet": "Matara 2",
+      "descriptionLength": 32,
+      "status": "resolved",
+      "statusRaw": "Pending"
+    },
+    {
+      "outlet": "Unawatuna",
+      "descriptionLength": 59,
+      "status": "resolved",
+      "statusRaw": "Resolved"
+    },
+    {
+      "outlet": "Tangalle",
+      "descriptionLength": 100,
+      "status": "resolved",
+      "statusRaw": "Resolved"
+    }
+  ]
+}

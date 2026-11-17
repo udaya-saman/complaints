@@ -1,0 +1,6 @@
+Area Coach,Outlet,Order Date,Customer Name,Customer Contact Number,Order Number,Service Channel,Complaint Channel,Complaint Type,Complaint Description,Complaint lodged by,Outlet Comment,Close complaint? (Yes / No),Closure Directive By,Sales Centre Closure Status,Customer Feedback Status
+Tharanga,Matara 2,2026-10-07,Demo Guest A,0710000101,DEMO-101,Delivery,GES,Incomplete Order,Sample missing beverage,Demo Agent A,Customer confirmed the replacement,Yes,Tharanga,Resolved,Satisfied
+Tharanga,Matara 2,2026-11-02,Demo Guest H,0710000108,DEMO-201,Delivery,Hotline,Order Delays,Illustrative late delivery,Demo Agent H,Customer called back,No,,Pending,Pending
+Tharanga,Akuressa,2026-11-05,Demo Guest I,0710000109,DEMO-202,Dine in,GES,Service Related,Illustrative queue complaint,Demo Agent I,Team briefed,Yes,Tharanga,Resolved,Satisfied
+Morris,Karapitiya,2026-11-08,Demo Guest J,0710000110,DEMO-203,Take away,Hotline,Product Quality,Illustrative preparation concern,Demo Agent J,Replacement arranged,Yes,Morris,Resolved,Satisfied
+Morris,Aluthgama,2026-11-11,Demo Guest K,0710000111,DEMO-204,Online,Via email,Incorrect Item,Illustrative missing side item,Demo Agent K,Investigation ongoing,No,,Pending,Pending

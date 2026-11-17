@@ -1,0 +1,7 @@
+PASS all five desktop tabs before data import
+PASS real browser Worker reads synthetic CSV, saves 4 records (2 resolved, 2 pending) through storage stand-in
+PASS all five tabs, status/search/outlet filters, PDF generation, and saved history at width 1250
+PASS all five tabs, status/search/outlet filters, PDF generation, and saved history at width 390
+PASS detailed PDF output
+PASS second month import, trend/history switching and backup generation
+PASS simulated storage startup error, navigation remains usable, retry succeeds

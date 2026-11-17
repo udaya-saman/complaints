@@ -1,0 +1,8 @@
+Area Coach,Outlet,Order Date,Customer Name,Customer Contact Number,Order Number,Service Channel,Complaint Channel,Complaint Type,Complaint Description,Complaint lodged by,Outlet Comment,Close complaint? (Yes / No),Closure Directive By,Sales Centre Closure Status,Customer Feedback Status
+Tharanga,Matara 2,2026-10-07,Demo Guest A,0710000101,DEMO-101,Delivery,GES,Incomplete Order,Sample missing beverage,Demo Agent A,Called guest and offered replacement,Yes,Tharanga,Pending,Satisfied
+Tharanga,Embilipitiya,2026-10-09,Demo Guest B,0710000102,DEMO-102,Take away,Hotline,Product Quality,Sample pizza was cold,Demo Agent B,Follow-up is being arranged,No,,Pending,Pending
+Morris,Galle,2026-10-13,Demo Guest C,0710000103,DEMO-103,Dine in,GES,Service Related,Sample counter service concern,Demo Agent C,Shift team coached,Yes,Morris,Resolved,Satisfied
+Morris,Unawatuna,2026-10-17,Demo Guest D,0710000104,DEMO-104,Online,Hotline,Incorrect Item,Sample item was incorrect,Demo Agent D,Customer callback scheduled,No,,Pending,Pending
+Different Coach,Matara 2,2026-10-19,Demo Guest E,0710000105,DEMO-105,Delivery,GES,Order Delays,Excluded other coach,Demo Agent E,No action,No,,Pending,Pending
+Morris,Matara 2,2026-10-20,Demo Guest F,0710000106,DEMO-106,Take away,Hotline,Product Quality,Excluded mismatched coach and outlet,Demo Agent F,No action,No,,Pending,Pending
+Morris,Hikkaduwa,2026-10-21,Demo Guest G,0710000107,DEMO-107,Delivery,GES,Product Quality,Excluded unapproved outlet,Demo Agent G,No action,No,,Pending,Pending

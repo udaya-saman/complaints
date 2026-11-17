@@ -1,0 +1,260 @@
+
+> customer-complaints-hub@2.5.0 test
+> node --test tests/*.test.mjs
+
+TAP version 13
+# Subtest: release bundle is classic JS and contains no runtime module imports
+ok 1 - release bundle is classic JS and contains no runtime module imports
+  ---
+  duration_ms: 9.129699
+  type: 'test'
+  ...
+# Subtest: published worker bundle independently reads supplied synthetic CSV without module requests
+ok 2 - published worker bundle independently reads supplied synthetic CSV without module requests
+  ---
+  duration_ms: 18.883056
+  type: 'test'
+  ...
+# Subtest: source headers map both new fields
+ok 3 - source headers map both new fields
+  ---
+  duration_ms: 1.104802
+  type: 'test'
+  ...
+# Subtest: manager directive plus yes is resolved despite pending primary status
+ok 4 - manager directive plus yes is resolved despite pending primary status
+  ---
+  duration_ms: 0.408044
+  type: 'test'
+  ...
+# Subtest: search: customer name, order number and date
+ok 5 - search: customer name, order number and date
+  ---
+  duration_ms: 0.576066
+  type: 'test'
+  ...
+# Subtest: contact lookup handles raw, local 0 and country prefix +94
+ok 6 - contact lookup handles raw, local 0 and country prefix +94
+  ---
+  duration_ms: 0.518561
+  type: 'test'
+  ...
+# Subtest: service and complaint channel filters combine correctly
+ok 7 - service and complaint channel filters combine correctly
+  ---
+  duration_ms: 11.682284
+  type: 'test'
+  ...
+# Subtest: every offline precache entry exists and app versions agree
+ok 8 - every offline precache entry exists and app versions agree
+  ---
+  duration_ms: 8.202804
+  type: 'test'
+  ...
+# Subtest: GitHub Pages navigation, PWA and file upload use subpath-local assets
+ok 9 - GitHub Pages navigation, PWA and file upload use subpath-local assets
+  ---
+  duration_ms: 2.058757
+  type: 'test'
+  ...
+# Subtest: exact 14 approved outlets and two mapped clusters
+ok 10 - exact 14 approved outlets and two mapped clusters
+  ---
+  duration_ms: 1.589994
+  type: 'test'
+  ...
+# Subtest: coach aliases are bounded; unknown names do not match
+ok 11 - coach aliases are bounded; unknown names do not match
+  ---
+  duration_ms: 0.745786
+  type: 'test'
+  ...
+# Subtest: source complaint column names map correctly
+ok 12 - source complaint column names map correctly
+  ---
+  duration_ms: 0.53895
+  type: 'test'
+  ...
+# Subtest: eligible records require BOTH coach and matching approved outlet
+ok 13 - eligible records require BOTH coach and matching approved outlet
+  ---
+  duration_ms: 1.600337
+  type: 'test'
+  ...
+# Subtest: missing coach column is blocked unless outlet-only explicitly permitted
+ok 14 - missing coach column is blocked unless outlet-only explicitly permitted
+  ---
+  duration_ms: 0.917356
+  type: 'test'
+  ...
+# Subtest: directive plus Yes overrides Pending, other rules stay intact
+ok 15 - directive plus Yes overrides Pending, other rules stay intact
+  ---
+  duration_ms: 0.740418
+  type: 'test'
+  ...
+# Subtest: dates, category normalization and aging
+ok 16 - dates, category normalization and aging
+  ---
+  duration_ms: 0.965779
+  type: 'test'
+  ...
+# Subtest: cross-month duplicate identities are stable without suppressing a month snapshot
+ok 17 - cross-month duplicate identities are stable without suppressing a month snapshot
+  ---
+  duration_ms: 0.670081
+  type: 'test'
+  ...
+# Subtest: persisted and restored records are always rechecked for coach/outlet mismatch
+ok 18 - persisted and restored records are always rechecked for coach/outlet mismatch
+  ---
+  duration_ms: 0.862098
+  type: 'test'
+  ...
+# Subtest: PHSL template restores overwritten description, action and closure headers only when anchors match
+ok 19 - PHSL template restores overwritten description, action and closure headers only when anchors match
+  ---
+  duration_ms: 1.829136
+  type: 'test'
+  ...
+# Subtest: lookup and summary headers are rejected even when they mention outlet, coach and complaint type
+ok 20 - lookup and summary headers are rejected even when they mention outlet, coach and complaint type
+  ---
+  duration_ms: 2.154026
+  type: 'test'
+  ...
+# Subtest: management summary builds a stand-alone PDF with vector charts
+ok 21 - management summary builds a stand-alone PDF with vector charts
+  ---
+  duration_ms: 29.845164
+  type: 'test'
+  ...
+# Subtest: details PDF hides contact numbers by default, includes on explicit request
+ok 22 - details PDF hides contact numbers by default, includes on explicit request
+  ---
+  duration_ms: 1.327242
+  type: 'test'
+  ...
+# Subtest: integrated repair checks the release, clears only matching application cache and returns to overview
+ok 23 - integrated repair checks the release, clears only matching application cache and returns to overview
+  ---
+  duration_ms: 3.133376
+  type: 'test'
+  ...
+# Subtest: failed repair is retryable and does not clear cache or navigate
+ok 24 - failed repair is retryable and does not clear cache or navigate
+  ---
+  duration_ms: 0.614948
+  type: 'test'
+  ...
+# Subtest: repair cannot interrupt pending import review
+ok 25 - repair cannot interrupt pending import review
+  ---
+  duration_ms: 0.266479
+  type: 'test'
+  ...
+# Subtest: detailed report has increased field spacing and retains long continuation text
+ok 26 - detailed report has increased field spacing and retains long continuation text
+  ---
+  duration_ms: 9.108131
+  type: 'test'
+  ...
+# Subtest: header and dynamic Import Excel controls are real native file inputs, not synthetic clicks
+ok 27 - header and dynamic Import Excel controls are real native file inputs, not synthetic clicks
+  ---
+  duration_ms: 1.646233
+  type: 'test'
+  ...
+# Subtest: selection handler queues before module startup and dispatches repeated selections
+ok 28 - selection handler queues before module startup and dispatches repeated selections
+  ---
+  duration_ms: 0.549303
+  type: 'test'
+  ...
+# Subtest: selected file navigates to library and clears stale review
+ok 29 - selected file navigates to library and clears stale review
+  ---
+  duration_ms: 1.203226
+  type: 'test'
+  ...
+# Subtest: invalid, empty and oversized files are rejected visibly
+ok 30 - invalid, empty and oversized files are rejected visibly
+  ---
+  duration_ms: 0.440691
+  type: 'test'
+  ...
+# Subtest: month change invalidates the review and confirmation
+ok 31 - month change invalidates the review and confirmation
+  ---
+  duration_ms: 0.18995
+  type: 'test'
+  ...
+# Subtest: file cannot change during analysis or save
+ok 32 - file cannot change during analysis or save
+  ---
+  duration_ms: 0.391544
+  type: 'test'
+  ...
+# Subtest: storage startup and save guards prevent silent or duplicate operations
+ok 33 - storage startup and save guards prevent silent or duplicate operations
+  ---
+  duration_ms: 0.317396
+  type: 'test'
+  ...
+# Subtest: repair only touches app-scoped cache and never deletes saved database
+ok 34 - repair only touches app-scoped cache and never deletes saved database
+  ---
+  duration_ms: 0.259147
+  type: 'test'
+  ...
+# Subtest: PHSL filename sets month and year automatically
+ok 35 - PHSL filename sets month and year automatically
+  ---
+  duration_ms: 0.517232
+  type: 'test'
+  ...
+# Subtest: worker discards other coaches and mismatched coach/outlet while retaining valid rows
+ok 36 - worker discards other coaches and mismatched coach/outlet while retaining valid rows
+  ---
+  duration_ms: 5.191471
+  type: 'test'
+  ...
+# Subtest: worker marks coachless CSV import as unverified and never auto approves
+ok 37 - worker marks coachless CSV import as unverified and never auto approves
+  ---
+  duration_ms: 1.141384
+  type: 'test'
+  ...
+# Subtest: no matching coach/outlet in valid CSV shows empty review, not misleading counts
+ok 38 - no matching coach/outlet in valid CSV shows empty review, not misleading counts
+  ---
+  duration_ms: 0.751295
+  type: 'test'
+  ...
+# Subtest: XLSX formatted empty cells cannot swallow adjacent headers or values
+ok 39 - XLSX formatted empty cells cannot swallow adjacent headers or values
+  ---
+  duration_ms: 12.823354
+  type: 'test'
+  ...
+# Subtest: blank CSV lines do not inflate exclusions and malformed quote is rejected
+ok 40 - blank CSV lines do not inflate exclusions and malformed quote is rejected
+  ---
+  duration_ms: 1.438982
+  type: 'test'
+  ...
+# Subtest: different actions/status on same complaint are retained and flagged, identical record collapsed
+ok 41 - different actions/status on same complaint are retained and flagged, identical record collapsed
+  ---
+  duration_ms: 0.74187
+  type: 'test'
+  ...
+1..41
+# tests 41
+# suites 0
+# pass 41
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 350.482262
