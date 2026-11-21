@@ -36,7 +36,7 @@ export async function openZip(blob){
     // Native DEFLATE-RAW is fastest. Some Safari/WebKit versions do not support
     // that exact format, so use the locally bundled MIT-licensed pako inflater.
     try{if(typeof DecompressionStream!=='undefined')return source.pipeThrough(new DecompressionStream('deflate-raw'));}catch{}
-    await import('./vendor/pako_inflate.min.js?v=2.7.0');
+    await import('./vendor/pako_inflate.min.js?v=2.8.0');
     const inflate=new self.pako.Inflate({raw:true});
     // pako may finish on the last non-empty chunk. Calling push again on an
     // already-ended inflater returns false even for a valid workbook.

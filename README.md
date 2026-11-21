@@ -1,9 +1,17 @@
-# Customer Complaints Hub
-Static, offline-first private complaint reporting, deployable on GitHub Pages. Only application code is hosted; uploaded records are stored in the current device's browser database.
-## Area Coach ownership history
-Before June 2026 Morris was Area Coach for all 14 approved outlets. Starting June 2026 the six-outlet Tharanga cluster transfers to Tharanga, and Morris retains the other eight. The reporting month determines assignment, not the order date.
-Because older releases excluded 13 otherwise valid April records, back up your history and re-import April 2026. Six May 2026 records naming Tharanga conflict with the historical allocation and are excluded, not silently reassigned.
-## Download PDF
-Choose a complaint, select View details, then Download PDF. The PDF includes the complaint, customer information, actions and source closure status. Keep exported PDFs secure.
-## Release
-See RELEASE_2.7.0.md. Node.js optional for testing; not required on GitHub Pages.
+# Customer Complaints Hub v2.8.0
+
+## Updated import behavior
+Upload an Excel .xlsx, .xlsm, or CSV file. The importer looks for the complaint register among workbook tabs, including renamed and duplicate Master Sheets. Modified optional column labels will not cause automatic rejection. It requires enough usable values to recognize an outlet and complaint description or type. Completely missing complaint data cannot be invented.
+
+Import selection and reporting month are independent; the selected month takes precedence over the filename. Existing monthly snapshots are preserved until you explicitly confirm a replacement.
+
+Historical Area Coach rules still apply: Morris owns all 14 approved outlets before June 2026, followed by Morris's eight and Tharanga's six beginning June. Missing coach values are provisionally accepted only after user confirmation. Other coaches and unapproved outlets remain excluded.
+
+### Privacy
+Customer records remain on your device. Do not upload customer spreadsheets to this public GitHub repository.
+
+### Verification
+The six source workbooks from April-September 2026 are covered by native and fallback decompression regression tests. Synthetic variants include renamed headers, nonstandard worksheets, multiple Master Sheets and missing coach columns. Import, search, charts and PDF behavior are also tested.
+
+### Running
+Upload the repository root to GitHub Pages, or use a local HTTP server for desktop testing. See test scripts in `tests/`.
