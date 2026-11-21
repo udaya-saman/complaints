@@ -8,12 +8,13 @@ test('renamed headings map to known complaint fields',()=>{
  const r=normalizeComplaint({A:'Morris',B:'Galle',C:'J-100',D:'Food was delayed',E:'Jane',F:'Pending'},map,2,'2026-10');
  assert.equal(r.description,'Food was delayed');assert.equal(r.status,'pending');
 });
-test('missing optional fields accepted provisionally, unrelated Area Coach excluded',()=>{
+test('missing optional fields and unrelated Area Coach are accepted by outlet',()=>{
  const map=detectHeaders({A:'Outlet Name',B:'Complaint Details'});
- const record=normalizeComplaint({A:'Matara 02',B:'Incorrect food'},map,2,'2026-10',{allowMissingCoach:true});
- assert.equal(record.outlet,'Matara 2');assert.equal(record.coachUnverified,true);
+ const record=normalizeComplaint({A:'Matara 02',B:'Incorrect food'},map,2,'2026-10');
+ assert.equal(record.outlet,'Matara 2');assert.equal(record.coachUnverified,false);
  const other=detectHeaders({A:'Area Manager',B:'Store Name',C:'Issue Details'});
- assert.equal(normalizeComplaint({A:'Anura',B:'Galle',C:'Late delivery'},other,2,'2026-10',{allowMissingCoach:true}).reason,'otherCoach');
+ const result=normalizeComplaint({A:'Anura',B:'Galle',C:'Late delivery'},other,2,'2026-10');
+ assert.equal(result.outlet,'Galle');assert.equal(result.sourceAreaCoach,'Anura');
 });
 test('worker supports duplicate master sheets and Excel macro extensions',()=>{
  const worker=readFileSync(new URL('../import-worker.js',import.meta.url),'utf8');
