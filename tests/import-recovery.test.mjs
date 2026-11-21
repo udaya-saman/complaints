@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {File} from 'node:buffer';
 import vm from 'node:vm';
-const source=readFileSync(new URL('../workbook-2.9.1.js',import.meta.url),'utf8');
+const source=readFileSync(new URL('../workbook-2.9.2.js',import.meta.url),'utf8');
 async function readCsv(text){
  const messages=[];
  const ctx=vm.createContext({Blob,TextDecoder,TextEncoder,ReadableStream,DecompressionStream,Date,setTimeout,clearTimeout,console,postMessage:x=>messages.push(x)});ctx.self=ctx;
