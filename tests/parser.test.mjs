@@ -14,19 +14,10 @@ test('coach aliases are bounded; unknown names do not match',()=>{
  assert.equal(canonicalCoach('Morris Junior'),null);assert.equal(canonicalCoach('Anura'),null);
 });
 test('source complaint column names map correctly',()=>{assert.equal(map.coach,'A');assert.equal(map.closedFlag,'D');assert.equal(map.closureDirective,'G');assert.equal(map.orderDate,'I');});
-test('eligible records require BOTH coach and matching approved outlet',()=>{
- const r=normalizeComplaint(row(),map,2,'2026-11');assert.equal(r.outlet,'Matara 2');assert.equal(r.areaCoach,'Tharanga');assert.equal(r.status,'resolved');
- assert.equal(normalizeComplaint(row('Anura'),map,3,'2026-11').reason,'otherCoach');
- assert.equal(normalizeComplaint(row('Morris'),map,4,'2026-11').reason,'coachOutletMismatch');
- assert.equal(normalizeComplaint(row('Tharanga','Hikkaduwa'),map,5,'2026-11').reason,'unknownOutlet');
- assert.equal(normalizeComplaint(row(''),map,6,'2026-11').reason,'missingCoachValue');
-});
-test('missing coach column is blocked unless outlet-only explicitly permitted',()=>{
- const m=detectHeaders({B:'Outlet',C:'Complaint Description',D:'Close Complaint(Yes/No)',E:'Sales Centre Closure Status',F:'Order Number'});
- const data={B:'Galle',C:'Wrong item',D:'No',E:'Pending',F:'G100'};
- assert.equal(normalizeComplaint(data,m,4,'2026-11').reason,'missingCoachColumn');
- const verified=normalizeComplaint(data,m,4,'2026-11',{allowMissingCoach:true});assert.equal(verified.coachUnverified,true);assert.equal(verified.areaCoach,'Morris');assert.equal(verified.status,'pending');
-});
+test('outlet alone determines eligibility',()=>{for(const coach of ['Tharanga','Morris','Anura','']){const r=normalizeComplaint(row(coach),map,3,'2026-11');assert.equal(r.outlet,'Matara 2');assert.equal(r.areaCoach,'Tharanga');assert.ok(verifiedRecordScope(r));}assert.equal(normalizeComplaint(row('Other','Hikkaduwa'),map,3,'2026-11').reason,'unknownOutlet');});
+
+test('coach column is optional',()=>{const m=detectHeaders({B:'Outlet',C:'Complaint Description'});const r=normalizeComplaint({B:'Galle',C:'Cold food'},m,2,'2026-11');assert.equal(r.areaCoach,'Morris');assert.equal(r.coachUnverified,false);});
+
 test('directive plus Yes overrides Pending, other rules stay intact',()=>{
  assert.equal(classifyStatus('Pending','Yes','Mr. Morris'),'resolved');
  assert.equal(classifyStatus('Un-Cont','Yes','Tharanga'),'resolved');
@@ -48,13 +39,7 @@ test('cross-month duplicate identities are stable without suppressing a month sn
  const another=normalizeComplaint(row('Tharanga','Matara 2','Wrong product'),map,4,'2026-11');assert.notEqual(a.identity,another.identity);
 });
 
-test('persisted and restored records are always rechecked for coach/outlet mismatch',()=>{
- const r=normalizeComplaint(row(),map,2,'2026-11');assert.ok(verifiedRecordScope(r));
- assert.equal(verifiedRecordScope({...r,areaCoach:'Other',coachUnverified:true}),false);
- assert.equal(verifiedRecordScope({...r,cluster:'Morris'}),false);
- assert.equal(verifiedRecordScope({...r,outlet:'Hikkaduwa'}),false);
- assert.equal(verifiedRecordScope({...r,coachUnverified:'true'}),false);
-});
+test('saved records require only a recognized outlet',()=>{const r=normalizeComplaint(row(),map,2,'2026-11');assert.ok(verifiedRecordScope({...r,areaCoach:'Other Coach',cluster:'Morris'}));assert.ok(verifiedRecordScope({...r,outlet:'Matra 02'}));assert.equal(verifiedRecordScope({...r,outlet:'Hikkaduwa'}),false);});
 
 test('PHSL template restores overwritten description, action and closure headers only when anchors match',()=>{
  const header={B:'Area Coach',C:'Outlet',D:'Order Date',F:'Customer Name',G:'Customer Contact Number',H:'Order Number',I:'Service Channel',J:'Complaint Channel',K:'Complaint Type',O:'overwritten description header',P:'Sales Centre Comment',Q:'Complaint lodged by',R:'outlet',T:'Comment Updated By',U:'yes',V:'Closure Directive By',W:'Sales Centre Closure Status',X:'Customer Feedback Status',Y:'Remark',Z:'Updated by'};
@@ -63,6 +48,4 @@ test('PHSL template restores overwritten description, action and closure headers
  assert.equal(a.outlet,'Aluthgama');assert.equal(a.description,'Actual detailed complaint');assert.equal(a.action,'Actual action');assert.equal(a.status,'resolved');
  const changed=detectHeaders({...header,Q:'Something else'});assert.equal(changed.description,'O');assert.equal(changed.action,'R');
 });
-test('lookup and summary headers are rejected even when they mention outlet, coach and complaint type',()=>{
- assert.equal(detectHeaders({A:'Outlet',B:'Area Coach',D:'Complaint Type',F:'Complaint Channel',H:'Closure Directive By',I:'Sales Centre Closure Status',K:'Service Channel',N:'Close Complaint? (YES/NO)'}),null);
-});
+test('outlet column is sufficient to read a workbook',()=>{const m=detectHeaders({A:'Outlet',B:'Area Coach',D:'Complaint Type'});assert.equal(m.outlet,'A');});
