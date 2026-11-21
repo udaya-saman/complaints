@@ -1,5 +1,5 @@
-import {openZip} from './zip-reader.js?v=2.7.0';
-import {detectHeaders,normalizeComplaint} from './parser-core.js?v=2.7.0';
+import {openZip} from './zip-reader.js?v=2.8.0';
+import {detectHeaders,normalizeComplaint} from './parser-core.js?v=2.8.0';
 const xmlDecode=s=>String(s??'').replace(/&(?:#x([\da-f]+)|#(\d+)|amp|lt|gt|quot|apos);/gi,(full,hex,dec)=>{
   if(hex||dec){const n=parseInt(hex||dec,hex?16:10);return Number.isFinite(n)&&n<=0x10ffff?String.fromCodePoint(n):full;}
   return ({'&amp;':'&','&lt;':'<','&gt;':'>','&quot;':'"','&apos;':"'"})[full.toLowerCase()]??full;
@@ -92,29 +92,54 @@ export function collector(period){
 }
 async function readXlsx(file,period){
   postMessage({type:'progress',percent:1,label:'Reading workbook…'});
-  const zip=await openZip(file);const shared=sharedValues(await zip.entryText('xl/sharedStrings.xml',120*1024*1024));
-  // Resolve real worksheet names/paths via workbook relationships, not ZIP entry order.
+  const zip=await openZip(file),shared=sharedValues(await zip.entryText('xl/sharedStrings.xml',120*1024*1024));
   const workbook=await zip.entryText('xl/workbook.xml'),rels=await zip.entryText('xl/_rels/workbook.xml.rels');
-  const links=new Map();for(const m of rels.matchAll(/<Relationship\b[^>]*>/g)){const tag=m[0],target=xmlDecode(attr(tag,'Target'));if(attr(tag,'Type').endsWith('/worksheet')&&attr(tag,'TargetMode')!=='External')links.set(attr(tag,'Id'),target.startsWith('/')?target.slice(1):'xl/'+target);}
-  const sheets=[];for(const m of workbook.matchAll(/<sheet\b[^>]*>/g)){const tag=m[0],path=links.get(attr(tag,'r:id')),entry=zip.entries.get(path);if(entry)sheets.push({...entry,title:xmlDecode(attr(tag,'name')),hidden:!!attr(tag,'state')&&attr(tag,'state')!=='visible'});}
-  if(!sheets.length)throw Error('No Excel worksheets were found.');
-  const masters=sheets.filter(x=>/^master\s*sheet(?:\s*\(\d+\))?$/i.test(x.title.trim()));
-  const primaryMasters=masters.length?masters.filter(x=>!x.hidden):[];
-  const worksheets=masters.length?(primaryMasters.length?[primaryMasters[0]]:[masters[0]]):sheets.filter(x=>!x.hidden&&!/^(data\s*sheet|summary|complaint\s*insights|closure\s*snapshot)\s*$/i.test(x.title.trim()));
-  const c=collector(period),ignoredSheets=sheets.filter(s=>!worksheets.includes(s)).map(s=>s.title);
-  for(let i=0;i<worksheets.length;i++){
-    const sheet=worksheets[i];let mapping=null;
-    const stream=await zip.entryStream(sheet.name);
-    await parseXmlRows(stream,shared,(row,rowNum)=>{
-      if(!mapping){mapping=detectHeaders(row);if(mapping){c.sheet(mapping,sheet.title);return;}}
-      else if(Object.values(row).some(v=>String(v).trim())){if(detectHeaders(row))return;c.add(row,mapping,rowNum);}
-    },(pct,scanned)=>postMessage({type:'progress',percent:Math.min(96,Math.floor((i+pct/100)/worksheets.length*95)),label:`Reading ${sheet.title} · ${scanned.toLocaleString()} rows scanned`}),sheet.uncompressed);
-    if(!mapping)ignoredSheets.push(sheet.title);
+  const links=new Map();
+  for(const m of rels.matchAll(/<Relationship\b[^>]*>/g)){
+    const tag=m[0],target=xmlDecode(attr(tag,'Target'));
+    if(attr(tag,'Type').endsWith('/worksheet')&&attr(tag,'TargetMode')!=='External'){
+      const raw=target.startsWith('/')?target.slice(1):target.startsWith('xl/')?target:'xl/'+target;
+      const parts=[];for(const part of raw.split('/')){if(part==='..')parts.pop();else if(part!=='.'&&part)parts.push(part);}
+      links.set(attr(tag,'Id'),parts.join('/'));
+    }
   }
-  const result=c.result();result.stats.ignoredSheets=ignoredSheets;return result;
+  const sheets=[];
+  for(const m of workbook.matchAll(/<sheet\b[^>]*>/g)){
+    const tag=m[0],path=links.get(attr(tag,'r:id')),entry=zip.entries.get(path);
+    if(entry)sheets.push({...entry,title:xmlDecode(attr(tag,'name')),hidden:!!attr(tag,'state')&&attr(tag,'state')!=='visible'});
+  }
+  if(!sheets.length)throw Error('No readable Excel worksheets were found.');
+  const master=x=>/^master\s*sheet(?:\s*\(\d+\))?$/i.test(x.title.trim());
+  const summary=x=>/^(data\s*sheet|summary|complaint\s*insights|closure\s*snapshot|pivot\s*table|dashboard)\s*$/i.test(x.title.trim());
+  const ordered=[...sheets].sort((a,b)=>{const rank=x=>master(x)?0:!x.hidden&&!summary(x)?1:!x.hidden?2:3;return rank(a)-rank(b);});
+  const errors=[];let chosen=null;
+  // Select the sheet with the most usable complaint records. A summary or
+  // renamed worksheet must not cause a valid register to be rejected.
+  for(let i=0;i<ordered.length;i++){
+    const sheet=ordered[i],c=collector(period);let mapping=null,rows=0;
+    try{
+      const stream=await zip.entryStream(sheet.name);
+      await parseXmlRows(stream,shared,(row,rowNum)=>{
+        if(!mapping){mapping=detectHeaders(row);if(mapping){c.sheet(mapping,sheet.title);return;}}
+        else if(Object.values(row).some(v=>String(v).trim())){
+          if(detectHeaders(row))return;
+          c.add(row,mapping,rowNum);rows++;
+        }
+      },(pct,scanned)=>postMessage({type:'progress',percent:Math.min(96,Math.floor((i+pct/100)/ordered.length*96)),label:`Checking ${sheet.title} · ${scanned.toLocaleString()} rows scanned`}),sheet.uncompressed);
+    }catch(e){errors.push(`${sheet.title}: ${String(e.message||e)}`);continue;}
+    if(!mapping)continue;
+    const result=c.result(),accepted=result.records.length;
+    if(!chosen||accepted>chosen.records.length||(accepted===chosen.records.length&&rows>chosen.rows))chosen={...result,rows};
+    if(accepted>0&&master(sheet)&&(i+1>=ordered.length||!master(ordered[i+1])))break;
+  }
+  if(!chosen)throw Error(errors.length?`No readable complaint register was found. ${errors[0]}`:'No complaint register was found. Select a sheet containing Outlet and Complaint columns.');
+  const {rows,...result}=chosen;
+  result.stats.ignoredSheets=sheets.filter(x=>!result.stats.sourceSheets.includes(x.title)).map(x=>x.title);
+  if(errors.length)result.stats.warnings.push(...errors);
+  return result;
 }
 async function readCsv(file,period){
-  if(file.size>40*1024*1024)throw Error('Large CSV files are not supported. Please split the file into smaller months.');
+  if(file.size>160*1024*1024)throw Error('CSV exceeds the safe text processing size. Please use an Excel .xlsx workbook for very large reports.');
   const rows=csvRows(await file.text());const c=collector(period);let map=null;
   rows.forEach((arr,i)=>{const o={};arr.forEach((v,j)=>{let n=j+1,s='';while(n){n--;s=String.fromCharCode(65+n%26)+s;n=Math.floor(n/26);}o[s]=v;});if(!map){map=detectHeaders(o);if(map)return;}else if(arr.some(v=>String(v).trim()))c.add(o,map,i+1);});
   if(map)c.sheet(map,'CSV');const result=c.result();result.stats.ignoredSheets=map?[]:['CSV'];return result;
@@ -125,7 +150,7 @@ self.onmessage=async e=>{
     if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(period))throw Error('Choose a valid year and month.');
     if(!(file instanceof Blob))throw Error('Please select a file to import.');
     const ext=String(file.name||'').toLowerCase().split('.').pop();
-    if(!['xlsx','csv'].includes(ext))throw Error('Please upload an .xlsx or .csv file.');
+    if(!['xlsx','xlsm','csv'].includes(ext))throw Error('Choose a .xlsx, .xlsm or .csv complaint file.');
     const result=ext==='csv'?await readCsv(file,period):await readXlsx(file,period);
     if(!result.stats.headerSheets){throw Error('No complaint register was found in this file. Please check that the sheet contains Outlet and Complaint information.');}
     postMessage({type:'complete',result});

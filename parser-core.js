@@ -38,22 +38,36 @@ const HEADER_MATCH={
   product:['productdetailsmentionproductnametopping','productdetails','itemdescription','productname','menuitem'],
   coach:['areacoach','areacoachname','areacoachincharge','clustercoach','clustername','coach']
 };
-export function detectHeaders(row){const entries=Object.entries(row).map(([c,v])=>[c,normalized(v)]).filter(([,v])=>v);const map={};
+export function detectHeaders(row){
+  const entries=Object.entries(row).map(([c,v])=>[c,normalized(v)]).filter(([,v])=>v);
+  const map={};
+  const patterns={
+    outlet:v=>/^(outlet|branch|store|restaurant|location)(name|code|number|no)?$/.test(v)||/^(name|code|number|no)(of)?(outlet|branch|store)$/.test(v),
+    description:v=>/^(complaint|issue|feedback)(description|details|detail|narrative|text|summary|explanation|nature)$/.test(v)||/^(description|details|detail|nature|summary)of(complaint|issue|feedback)$/.test(v),
+    coach:v=>/^(area|regional|cluster)(coach|manager|leader)(name|incharge)?$/.test(v)||/^(coach|manager)of(area|cluster)$/.test(v),
+    orderNumber:v=>/^(order|invoice|receipt|bill)(number|no|id|reference|ref)$/.test(v),
+    orderDate:v=>/^(order|complaint|incident|reported|received)(date|on)$/.test(v),
+    action:v=>/^(outlet|store|branch)(comment|comments|action|response|reply)$/.test(v)||/^(action|response|solution)(taken|provided)?(by)?(outlet|store|branch)$/.test(v),
+    status:v=>/^(complaint|salescentre|salescenter|case)(close|closure|resolution)?status$/.test(v),
+    closedFlag:v=>/^(close|closed|closure)(the)?complaint(yesno|yn|flag|status)?$/.test(v),
+    closureDirective:v=>/^(closure|closing)(directive|authorized|approved)(by|from)?$/.test(v),
+    customerContact:v=>/^(customer|guest|client)(contact|phone|telephone|mobile)(number|no)?$/.test(v),
+    customerName:v=>/^(customer|guest|client)(name|fullname)$/.test(v),
+    channel:v=>/^(complaint|feedback)(source|channel|medium)$/.test(v),
+    service:v=>/^(service|order|delivery)(channel|mode|type)$/.test(v),
+    type:v=>/^(complaint|issue|feedback)(type|category|classification)$/.test(v)
+  };
   for(const [field,aliases] of Object.entries(HEADER_MATCH)){
-    let hit=entries.find(([,v])=>aliases.includes(v));
-    if(!hit&&field==='description')hit=entries.find(([,v])=>v==='description'||(v.includes('complaint')&&(v.includes('detail')||v.includes('description'))));
-    if(!hit&&field==='status')hit=entries.find(([,v])=>v.endsWith('closurestatus'));
-    if(!hit&&field==='action')hit=entries.find(([,v])=>v.includes('outlet')&&v.includes('comment'));
+    const hit=entries.find(([,v])=>aliases.includes(v)||(patterns[field]?.(v)??false));
     if(hit)map[field]=hit[0];
   }
-  // PHSL Master Sheet template has stable anchors even where users overwrite headers.
+  // PHSL templates sometimes contain edited O/R/U column headings. Recover
+  // positions only when multiple independent anchors verify this layout.
   const anchors={B:'areacoach',C:'outlet',D:'orderdate',F:'customername',G:'customercontactnumber',H:'ordernumber',I:'servicechannel',J:'complaintchannel',K:'complainttype',P:'salescentrecomment',Q:'complaintlodgedby',T:'commentupdatedby',V:'closuredirectiveby',W:'salescentreclosurestatus',X:'customerfeedbackstatus',Y:'remark',Z:'updatedby'};
   const evidence=Object.entries(anchors).filter(([col,label])=>normalized(row[col])===label).length;
-  if(normalized(row.B)==='areacoach'&&normalized(row.C)==='outlet'&&evidence>=8){
-    // Only use positional recovery when ALL template anchors match; never guess on another layout.
-    for(const [field,col] of Object.entries({description:'O',action:'R',closedFlag:'U'}))if(!map[field]||map[field]!==col)map[field]=col;
-    // An overwritten R header 'outlet' must not replace the genuine C header.
-    map.outlet='C'; map.coach='B';
+  if(map.outlet==='C'&&map.coach==='B'&&evidence>=5&&[row.D,row.H,row.K].filter(x=>x!=null).length>=2){
+    for(const [field,col] of Object.entries({description:'O',action:'R',closedFlag:'U'}))if(!map[field])map[field]=col;
+    map.outlet='C';
   }
   const hasNarrative=!!map.description;
   const hasIdentity=!!(map.orderDate||map.orderNumber||map.customerName||map.lodgedBy);
