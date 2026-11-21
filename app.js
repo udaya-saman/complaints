@@ -1,9 +1,9 @@
-import {OUTLETS,CLUSTERS,getScopeOutlets,summarize,pendingAge,complaintIdentity,crossMonthDuplicates,normalizeCategory,verifiedRecordScope,canonicalCoach,coachForOutletAtPeriod} from './parser-core.js?v=2.8.0';
-import {channelOptions,matchesChannels,matchesSearch} from './filters.js?v=2.8.0';
-import {listSnapshots,saveSnapshot,removeSnapshot,saveBatch,requestDurableStorage} from './db.js?v=2.8.0';
-import {generateSummaryPdf,generateDetailedPdf,generateComplaintPdf} from './pdf-reports.js?v=2.8.0';
+import {OUTLETS,CLUSTERS,getScopeOutlets,summarize,pendingAge,complaintIdentity,crossMonthDuplicates,normalizeCategory,verifiedRecordScope,canonicalCoach,coachForOutletAtPeriod} from './parser-core.js?v=2.9.0';
+import {channelOptions,matchesChannels,matchesSearch} from './filters.js?v=2.9.0';
+import {listSnapshots,saveSnapshot,removeSnapshot,saveBatch,requestDurableStorage} from './db.js?v=2.9.0';
+import {generateSummaryPdf,generateDetailedPdf,generateComplaintPdf} from './pdf-reports.js?v=2.9.0';
 
-const VERSION='2.8.0';
+const VERSION='2.9.0';
 const PAGES={overview:['Overview'],complaints:['Complaints'],trends:['Monthly trends'],reports:['PDF reports'],library:['Data library'],update:['Update & repair']};
 const $=id=>document.getElementById(id),main=$('main-content'),modal=$('modal-root');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -19,15 +19,20 @@ const state={snapshots:[],route:'overview',mode:getPref('ph-scope-mode','cluster
 const orderedSnapshots=()=>[...state.snapshots].sort((a,b)=>a.period.localeCompare(b.period));
 const latestPeriod=()=>{const ordered=orderedSnapshots();return ordered.length?ordered[ordered.length-1].period:'';};
 const selectedPeriod=()=>state.period==='latest'?latestPeriod():state.period;
-const scopeOutlets=()=>getScopeOutlets(state.mode,state.scope);
+const scopeOutlets=()=>{
+ if(state.mode==='outlet')return getScopeOutlets(state.mode,state.scope);
+ if(state.scope==='morris'&&(state.period==='all'||(selectedPeriod()&&selectedPeriod()<'2026-06')))return OUTLETS;
+ if(state.scope==='tharanga'&&state.period!=='all'&&selectedPeriod()&&selectedPeriod()<'2026-06')return [];
+ return getScopeOutlets(state.mode,state.scope);
+};
 const scopeName=()=>state.mode==='outlet'?(state.scope==='all'?'All 14 outlets':state.scope):state.scope==='tharanga'?"Tharanga's Cluster":state.scope==='morris'?"Morris's Cluster":"Tharanga's and Morris's Clusters";
 // Older v1.1 snapshots lacked coach proof. Prevent unverified legacy entries
 // silently appearing under the new strict coach policy.
 const verifiedRow=verifiedRecordScope;
-const allRecords=()=>state.snapshots.flatMap(s=>(s.records||[]).filter(verifiedRow).map(r=>({...r,period:s.period})));
+const allRecords=()=>state.snapshots.flatMap(s=>(s.records||[]).filter(verifiedRow).map(r=>{const outlet=canonicalOutlet(r.outlet);const coach=coachForOutletAtPeriod(outlet,s.period);return {...r,outlet,period:s.period,sourceAreaCoach:r.sourceAreaCoach??r.areaCoach,areaCoach:coach,cluster:coach};}));
 const scopeRecords=records=>records.filter(r=>{
  const included=state.mode==='outlet'?new Set(scopeOutlets()).has(r.outlet):
- (state.scope==='both'||r.areaCoach===(state.scope==='tharanga'?'Tharanga':'Morris'));
+ (state.scope==='both'||coachForOutletAtPeriod(r.outlet,r.period)===(state.scope==='tharanga'?'Tharanga':'Morris'));
  return included&&matchesChannels(r,state);
 });
 const monthRecords=()=>scopeRecords(allRecords()).filter(r=>state.period==='all'||r.period===selectedPeriod());
@@ -102,9 +107,9 @@ function library(){const total=orderedSnapshots().length,last=getPref('ph-last-b
  ${state.importing?`<div class="import-progress" aria-live="polite"><label for="excel-progress">${esc(state.progressLabel||'Reading file…')}</label><progress max="100" value="${state.progress}" id="excel-progress"></progress><small>${state.progress}% · Very large, heavily formatted Excel files may require extra processing.</small></div>`:''}
  ${state.dbLoading?'<div class="alert notice">Opening your saved library. You can choose a file now; analysis will be available once storage is ready.</div>':''}${state.dbError?`<div class="alert error" role="alert">${esc(state.dbError)} <a href="./update.html" class="text-button">Update / repair app</a></div>`:''}${state.importError?`<div class="alert error" role="alert">${esc(state.importError)}</div>`:''}
  ${state.preview?`<div class="import-review" role="status"><div class="section-heading"><div><h2>${num(state.preview.records.length)} complaints ready to save</h2><p>${esc(monthName(state.preview.period))}</p></div></div>
- ${state.preview.stats.missingCoachColumn?`<div class="alert important"><label class="check-label coach-check"><input id="coach-ack" type="checkbox" ${state.saving?'disabled':''} ${state.missingCoachAck?'checked':''}> Some records have no Area Coach information. I confirm that these approved outlets should be assigned using the selected cluster list.</label></div>`:''}
- <div class="review-actions"><button type="button" class="btn btn-primary" id="save-preview" ${state.saving||state.dbLoading||!!state.dbError||(state.preview.stats.missingCoachColumn&&!state.missingCoachAck)?'disabled':''}>✓ Save ${num(state.preview.records.length)} complaints</button><button type="button" class="btn btn-secondary" id="discard-preview" ${state.saving?'disabled':''}>Discard preview</button></div>${!state.preview.records.length?`<p class="alert important">No matching complaints were found for these two clusters. Double-check that you selected the intended report.</p>`:''}</div>`:''}</section>
- <aside class="panel section-card library-aside"><div class="section-heading"><h2>How it works</h2></div><div class="steps"><div><span>01</span><p><strong>Select month & file</strong><small>Monthly reports can contain several Area Coaches.</small></p></div><div><span>02</span><p><strong>Review eligible complaints</strong><small>Historical Area Coach ownership is applied by reporting month.</small></p></div><div><span>03</span><p><strong>Save & analyze</strong><small>Generate reports and compare historical months.</small></p></div></div><div class="aside-note"><strong>Privacy comes first</strong><p>Customer names and phone numbers are kept in this browser's private device storage. GitHub Pages hosts only the app code, not your reports.</p></div></aside></div>
+
+ <div class="review-actions"><button type="button" class="btn btn-primary" id="save-preview" ${state.saving||state.dbLoading||!!state.dbError?'disabled':''}>✓ Save ${num(state.preview.records.length)} complaints</button><button type="button" class="btn btn-secondary" id="discard-preview" ${state.saving?'disabled':''}>Discard preview</button></div>${!state.preview.records.length?`<p class="alert important">No matching complaints were found for these two clusters. Double-check that you selected the intended report.</p>`:''}</div>`:''}</section>
+ <aside class="panel section-card library-aside"><div class="section-heading"><h2>How it works</h2></div><div class="steps"><div><span>01</span><p><strong>Select month & file</strong><small>Only outlet names are checked during import.</small></p></div><div><span>02</span><p><strong>Review eligible complaints</strong><small>Historical Area Coach ownership is applied by reporting month.</small></p></div><div><span>03</span><p><strong>Save & analyze</strong><small>Generate reports and compare historical months.</small></p></div></div><div class="aside-note"><strong>Privacy comes first</strong><p>Customer names and phone numbers are kept in this browser's private device storage. GitHub Pages hosts only the app code, not your reports.</p></div></aside></div>
  <div class="content-grid equal"><section class="panel section-card"><div class="section-heading"><div><h2>Saved reporting months</h2><p>${total} month${total===1?'':'s'} in this device's library</p></div></div>${total?`<div class="saved-months">${orderedSnapshots().reverse().map(s=>`<div class="month-entry"><span class="month-symbol">▦</span><div><strong>${esc(monthName(s.period))}</strong><small>${num((s.records||[]).length)} complaints · ${esc(s.fileName||'Imported data')}</small></div><div class="month-actions"><button type="button" class="text-button" data-open-month="${esc(s.period)}">View</button><button type="button" class="text-button danger" data-delete-month="${esc(s.period)}">Delete</button></div></div>`).join('')}</div>`:blankState('No saved reports yet','Your uploaded monthly history will appear here.',false)}</section>
  <section class="panel section-card"><div class="section-heading"><div><h2>Backup & recovery</h2><p>Protect your locally saved complaint history.</p></div></div><div class="backup-card"><div class="backup-badge">${days===null?'No backup recorded':days===0?'Backed up today':`Last backup ${days} day${days===1?'':'s'} ago`}</div><p>Export your full history to a secure JSON file. The file contains customer information; store it somewhere private.</p><div class="backup-actions"><button class="btn btn-primary" id="export-backup" type="button" ${!total?'disabled':''}>↧ Download backup</button><label class="btn btn-secondary restore-button">Restore backup<input class="sr-only" id="backup-file" type="file" accept=".json,application/json"></label></div>${total&&(days===null||days>=7)?'<p class="backup-warning">Backup reminder: seven days have passed, or no backup has been made yet.</p>':''}</div><div class="install-tip"><strong>Install for easier offline access</strong><p>iPhone: Share → Add to Home Screen. Android: browser menu → Install app. The app also works in a regular browser after its first successful load.</p></div></section></div>`;
 }
@@ -149,17 +154,17 @@ function invalidateImportPreview(){
 async function importFile(){if(!state.selectedFile||state.importing||state.saving||state.dbLoading||state.dbError)return;const chosenFile=state.selectedFile;const period=`${state.uploadYear}-${String(state.uploadMonth).padStart(2,'0')}`;if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(period)||state.uploadYear<2000||state.uploadYear>2100){alertToast('Select a valid reporting year and month.');return;}
  const namedPeriod=filenamePeriod(chosenFile.name);if(namedPeriod&&namedPeriod!==period)alertToast(`Reading under the selected ${monthName(period)} reporting month.`);
  state.importing=true;state.preview=null;state.importError='';state.progress=0;state.progressLabel='Reading workbook';state.missingCoachAck=false;render();
- let worker;try{worker=new Worker('./workbook-2.8.0.js');}catch(e){state.importing=false;state.importError='The workbook reader could not start. Check this browser supports offline files, then refresh and try again.';render();return;}
+ let worker;try{worker=new Worker('./workbook-2.9.0.js');}catch(e){state.importing=false;state.importError='The workbook reader could not start. Check this browser supports offline files, then refresh and try again.';render();return;}
  let timer;const stop=()=>{clearTimeout(timer);state.importing=false;worker.terminate();render();};const watchdog=()=>{clearTimeout(timer);timer=setTimeout(()=>{state.importError='The workbook reader stopped responding. Try again or export the complaint rows to a smaller file.';stop();},300000);};watchdog();
  worker.onmessage=e=>{const d=e.data||{};if(d.type==='progress'){watchdog();state.progress=d.percent||0;state.progressLabel=d.label||'Reading workbook';const p=$('excel-progress');if(p){p.value=state.progress;const parent=p.parentElement;parent.querySelector('label').textContent=state.progressLabel;parent.querySelector('small').textContent=`${state.progress}% · Very large worksheets may take extra processing.`;}}
  else if(d.type==='complete'){state.preview=d.result;state.preview.fileName=chosenFile.name;state.preview.crossDuplicates=crossMonthDuplicates(d.result.records,state.snapshots.filter(s=>s.period!==period));stop();alertToast(`${num(state.preview.records.length)} complaints ready for review.`);}
  else if(d.type==='error'){state.importError=d.message||'Workbook could not be processed.';stop();}};
  worker.onmessageerror=()=>{state.importError='The workbook reader returned unreadable data. Please try again.';stop();};
- worker.onerror=e=>{e.preventDefault?.();state.importError='The workbook reader could not load or stopped unexpectedly. Check that workbook-2.8.0.js was uploaded, or try a smaller .xlsx or .csv file.';stop();};
+ worker.onerror=e=>{e.preventDefault?.();state.importError='The workbook reader could not load or stopped unexpectedly. Check that workbook-2.9.0.js was uploaded, or try a smaller .xlsx or .csv file.';stop();};
  try{worker.postMessage({file:chosenFile,period});}catch(e){state.importError='The selected file could not be passed to the workbook reader. Please try again.';stop();}
 }
 async function saveReview(){const p=state.preview;if(!p||state.saving||state.importing||state.dbLoading||state.dbError)return;
- if(p.stats.missingCoachColumn&&!state.missingCoachAck){alertToast('Confirm the missing Area Coach warning before saving.');return;}
+ 
  if(!p.records.length&&!confirm(`Save ${monthName(p.period)} with zero eligible complaints? Check excluded records first.`))return;
  if(state.snapshots.some(s=>s.period===p.period)&&!confirm(`Replace the saved ${monthName(p.period)} report? The existing month stays unchanged until you confirm. Create a backup first if needed.`))return;
  state.saving=true;render();try{const snapshot={period:p.period,records:p.records,fileName:p.fileName,savedAt:new Date().toISOString(),stats:p.stats,version:2,importerVersion:VERSION};await saveSnapshot(snapshot);state.snapshots=await listSnapshots();state.preview=null;state.selectedFile=null;state.missingCoachAck=false;state.period=p.period;state.status='all';state.search='';state.searchField='all';state.serviceChannel='all';state.complaintChannel='all';state.page=1;alertToast(`${monthName(p.period)} saved successfully.`);location.hash='#/overview';render();}catch(e){alertToast(e.message||'Unable to save the imported month.');}finally{state.saving=false;render();}
@@ -169,9 +174,9 @@ async function backup(){const payload={app:'Customer Complaints Hub',schemaVersi
 async function restore(file){if(!file)return;if(state.saving||state.importing||state.dbLoading||state.dbError||state.repairing)return alertToast('Finish the current operation first.');state.saving=true;render();try{if(file.size>60*1024*1024)throw Error('Backup exceeds the 60 MB safety limit.');const parsed=JSON.parse(await file.text());if(parsed.app!=='Customer Complaints Hub'||![1,2].includes(parsed.schemaVersion)||!Array.isArray(parsed.snapshots))throw Error('This is not a valid complaints backup.');
  // Backups from earlier versions without coach evidence are not silently accepted.
  const excluded=[];const snaps=parsed.snapshots.map(s=>{if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(s.period)||!Array.isArray(s.records))throw Error('The backup has invalid month data.');
-  const records=s.records.map(r=>{if(parsed.schemaVersion===1&&!r.areaCoach&&!r.coachUnverified&&OUTLETS.includes(r.outlet))return {...r,cluster:coachForOutletAtPeriod(r.outlet,s.period),areaCoach:coachForOutletAtPeriod(r.outlet,s.period),coachUnverified:true};return r;}).filter(r=>{const valid=verifiedRecordScope(r)&&['pending','resolved'].includes(r.status)&&r.description;if(!valid)excluded.push(`${s.period} / ${r.outlet||'Unknown'}`);return valid;});return {...s,records,version:2};});
- if(excluded.length)throw Error(`${excluded.length} backup records contain mismatched coach/outlet data or invalid fields. Reimport these from the source workbook.`);
- if(parsed.schemaVersion===1&&!confirm('This is an older backup without independently verified Area Coach values. Restore its approved-outlet records by assigning coaches from the outlet list only? The restored records will remain flagged as unverified.'))return;
+  const records=s.records.map(r=>{const outlet=canonicalOutlet(r.outlet);const coach=coachForOutletAtPeriod(outlet,s.period);return {...r,outlet,cluster:coach,sourceAreaCoach:r.sourceAreaCoach??r.areaCoach,areaCoach:coach};}).filter(r=>{const valid=verifiedRecordScope(r)&&['pending','resolved'].includes(r.status);if(!valid)excluded.push(`${s.period} / ${r.outlet||'Unknown'}`);return valid;});return {...s,records,version:2};});
+ if(excluded.length)throw Error(`${excluded.length} backup records contain unapproved or unrecognizable outlets or invalid status fields. Reimport these from the source workbook.`);
+ 
  if(new Set(snaps.map(s=>s.period)).size!==snaps.length)throw Error('The backup contains duplicate reporting months. Restore a valid backup instead.');
  const overrides=snaps.filter(s=>state.snapshots.some(old=>old.period===s.period)).length;
  if(!confirm(`Restore ${snaps.length} reporting months? ${overrides} existing month(s) will be overwritten. Back up your current data first.`))return;
@@ -203,7 +208,7 @@ function bind(){main.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{s
 
  const drop=$('dropzone');if(drop){drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('dragging');});drop.addEventListener('dragleave',()=>drop.classList.remove('dragging'));drop.addEventListener('drop',e=>{e.preventDefault();e.stopPropagation();drop.classList.remove('dragging');useComplaintFile(e.dataTransfer?.files?.[0]);});}
  $('start-import')?.addEventListener('click',importFile);
- $('coach-ack')?.addEventListener('change',e=>{state.missingCoachAck=e.target.checked;$('save-preview').disabled=state.saving||!!state.dbError||!state.missingCoachAck;});
+ 
  $('save-preview')?.addEventListener('click',saveReview);
  $('discard-preview')?.addEventListener('click',()=>{if(state.saving)return;state.preview=null;state.missingCoachAck=false;render();});
  $('clear-selected-file')?.addEventListener('click',()=>{if(state.importing||state.saving)return;state.selectedFile=null;state.preview=null;state.importError='';state.missingCoachAck=false;render();});

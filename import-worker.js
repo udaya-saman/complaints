@@ -1,5 +1,5 @@
-import {openZip} from './zip-reader.js?v=2.8.0';
-import {detectHeaders,normalizeComplaint} from './parser-core.js?v=2.8.0';
+import {openZip} from './zip-reader.js?v=2.9.0';
+import {detectHeaders,normalizeComplaint} from './parser-core.js?v=2.9.0';
 const xmlDecode=s=>String(s??'').replace(/&(?:#x([\da-f]+)|#(\d+)|amp|lt|gt|quot|apos);/gi,(full,hex,dec)=>{
   if(hex||dec){const n=parseInt(hex||dec,hex?16:10);return Number.isFinite(n)&&n<=0x10ffff?String.fromCodePoint(n):full;}
   return ({'&amp;':'&','&lt;':'<','&gt;':'>','&quot;':'"','&apos;':"'"})[full.toLowerCase()]??full;
@@ -65,16 +65,14 @@ export function collector(period){
   let headerSheets=0,ignored=0,dateMismatch=0,duplicate=0,missingStatus=0,unverified=0;const sourceSheets=[];const identities=new Set();let possibleDuplicates=0;
   const warnings=[];
   return {
-    sheet(mapping,sheetName){headerSheets++;sourceSheets.push(sheetName);if(!mapping.coach)warnings.push(`${sheetName}: no Area Coach column. Outlet-only rows require explicit confirmation.`);},
+    sheet(mapping,sheetName){headerSheets++;sourceSheets.push(sheetName);},
     add(row,map,sourceRow){
       // Excel formulas fill blank template rows with #N/A; those are not complaints.
       const meaningful=key=>{const v=String(row[map[key]]??'').trim();return v&&!/^#(?:N\/A|REF!|VALUE!|DIV\/0!|NAME\?|NUM!|NULL!)$/i.test(v);};
       if(!['outlet','description','type','customerName','orderNumber'].some(meaningful))return;
-      const res=normalizeComplaint(row,map,sourceRow,period,{allowMissingCoach:true});
+      const res=normalizeComplaint(row,map,sourceRow,period);
       if(res.ignored){ignored++;reasonCounts[res.reason]=(reasonCounts[res.reason]||0)+1;
         if(res.reason==='unknownOutlet')unknown.set(res.originalOutlet,(unknown.get(res.originalOutlet)||0)+1);
-        if(res.reason==='otherCoach')otherCoaches.set(res.originalCoach,(otherCoaches.get(res.originalCoach)||0)+1);
-        if(res.reason==='coachOutletMismatch' && mismatches.length<12)mismatches.push({row:res.sourceRow,outlet:res.originalOutlet,coach:res.originalCoach});
         return;
       }
       // Exact repeated records are safe to collapse; changed closure/action rows are not silently dropped.
@@ -87,7 +85,7 @@ export function collector(period){
       records.push(res);
     },
     result(){return {period,records,stats:{found:records.length,ignored,reasonCounts,duplicate,dateMismatch,headerSheets,missingStatus,unverified,sourceSheets,possibleDuplicates,
-      missingCoachColumn:unverified>0||warnings.length>0,unknownOutlets:Object.fromEntries(unknown),excludedCoaches:Object.fromEntries(otherCoaches),mismatches,warnings}};}
+      missingCoachColumn:false,unknownOutlets:Object.fromEntries(unknown),excludedCoaches:Object.fromEntries(otherCoaches),mismatches,warnings}};}
   };
 }
 async function readXlsx(file,period){
