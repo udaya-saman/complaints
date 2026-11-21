@@ -1,17 +1,12 @@
-# Customer Complaints Hub v2.8.0
+# Customer Complaints Hub v2.9.0
 
-## Updated import behavior
-Upload an Excel .xlsx, .xlsm, or CSV file. The importer looks for the complaint register among workbook tabs, including renamed and duplicate Master Sheets. Modified optional column labels will not cause automatic rejection. It requires enough usable values to recognize an outlet and complaint description or type. Completely missing complaint data cannot be invented.
+## Outlet-only import policy
+Only the approved Outlet name is used for import eligibility. Small spelling errors are matched conservatively. Unknown or ambiguous outlets remain excluded. Matara and Matara 2, or Welipenna A and B, are never silently interchanged.
 
-Import selection and reporting month are independent; the selected month takes precedence over the filename. Existing monthly snapshots are preserved until you explicitly confirm a replacement.
+Area Coach is no longer an import-validation rule. The original source value is preserved as sourceAreaCoach. Reporting clusters are calculated from outlet and reporting month: Morris before June 2026 for all approved outlets; from June onward, Tharanga manages six and Morris the other eight.
 
-Historical Area Coach rules still apply: Morris owns all 14 approved outlets before June 2026, followed by Morris's eight and Tharanga's six beginning June. Missing coach values are provisionally accepted only after user confirmation. Other coaches and unapproved outlets remain excluded.
+Missing complaint description, status, customer contact or other optional data does not block a row. Blank closure fields are treated as Pending.
 
-### Privacy
-Customer records remain on your device. Do not upload customer spreadsheets to this public GitHub repository.
+Older saved snapshots are normalized to outlet-only rules on display. Restore also checks outlets, not source coaches. Previously excluded source records require re-import after you back up the existing local data.
 
-### Verification
-The six source workbooks from April-September 2026 are covered by native and fallback decompression regression tests. Synthetic variants include renamed headers, nonstandard worksheets, multiple Master Sheets and missing coach columns. Import, search, charts and PDF behavior are also tested.
-
-### Running
-Upload the repository root to GitHub Pages, or use a local HTTP server for desktop testing. See test scripts in `tests/`.
+Customer information is stored on the device, never in the public GitHub repository. The offline service worker precaches local application assets.
