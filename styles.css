@@ -56,3 +56,7 @@
 .detail-pdf-note{margin-right:auto;font-size:.84rem;color:#697282;max-width:235px}
 @media(max-width:670px){.filter-heading .choice-pills .pill{min-height:38px;padding:7px 10px}}
 @media(max-width:580px){.detail-footer .btn{flex:1 1 auto}.detail-pdf-note{flex-basis:100%;max-width:none}}
+
+/* v2.9.2 visible release indicator; mobile safe. */
+.version-pill{display:inline-flex;align-items:center;min-height:28px;padding:4px 10px;background:#F1F2F4;border:1px solid #E0E2E7;border-radius:99px;font-size:13px;font-weight:750;color:#414955;white-space:nowrap}
+@media(max-width:480px){.version-pill{padding:3px 7px;font-size:12px}}

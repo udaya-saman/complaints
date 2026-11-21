@@ -1,19 +1,18 @@
-# Customer Complaints Hub v2.9.1
-Offline-first complaint dashboard for GitHub Pages. Customer data stays in the local device's browser.
+# Customer Complaints Hub v2.9.2
 
-## Corrected Excel extraction
-The importer scans workbook sheets and plausible header rows rather than selecting the first "Outlet" caption. It scores the complaint-related columns and retained eligible rows, preferring the actual complaint register over summary tabs and introductory headings. A workbook with renamed columns or multiple Master Sheet variants can still be read when it contains recognizable complaint data.
+Modern offline-first customer complaints dashboard for GitHub Pages and local Windows use.
 
-**Only approved Outlet names determine eligibility.** Area Coach is retained solely as source metadata; it never excludes a complaint. Small, unambiguous outlet-name typos can be corrected. Historical cluster membership is assigned from the outlet and reporting month (Morris covers all fourteen outlets before June 2026, then the six-outlet transfer to Tharanga takes effect).
+## Important: identify the release
+The **top-right version label must display v2.9.2**. If you still see the old "No matching complaints were found for these two clusters" warning or an enabled "Save 0 complaints" button, you are running an older release. GitHub source updates do not update a previously downloaded Windows executable.
 
-An empty preview cannot overwrite a saved month. Existing imported data and backups are not erased by updating the application.
+For **local Windows use**, close the old Complaints Hub window and start the new v2.9.2 portable Windows launcher. It serves the new application at the same `http://localhost:8765` origin. Keep using the same browser so previously saved complaint history remains available. Do not clear browser site data.
 
-## Verified sources and limitations
-All six supplied April–September 2026 workbooks were reprocessed with the revised extractor: 30, 20, 28, 33, 30, and 15 eligible complaint records. The 68 MB example imported 22 records. A deliberately altered June workbook with added misleading preheader rows returned 28 valid records; the previous extractor had returned only 13 from a secondary sheet. New automated tests cover misleading headers and typo-tolerant outlet recognition.
+For **GitHub Pages**, deploy the versioned files together, then select Data Library > Update & repair. The build does not upload any customer spreadsheets.
 
-The local automated suite passed 63/63 tests. The application also completed a Chromium UI workflow with the original workbook at desktop and mobile viewport sizes using simulated local storage. Physical-device testing and live GitHub Pages behavior have not been verified.
+## Excel import
+The importer searches relevant worksheets for plausible complaint tables and recognizes the real headings rather than an introductory "Outlet" caption. Only one of the 14 approved Outlet names determines whether a complaint is eligible. Minor unambiguous outlet typos are recognized. Missing or contradictory Area Coach values are never rejection criteria. Reporting clusters follow the approved June 2026 handover.
 
-## Updating
-Commit the entire release including `index.html`, `sw.js`, `hub-2.9.1.js`, and `workbook-2.9.1.js`; mixing versioned files can cause an old importer to load. Use Data Library > Update & repair to refresh cached application files. Do not clear site data; this can delete saved complaint records.
+The August 2026 (3) report returned 30 eligible records (25 resolved, five pending) in an isolated browser test. An empty import cannot overwrite saved data.
 
-For months affected by old import behavior, export a JSON backup, then re-import the original workbook.
+## Privacy and testing
+Customer complaint records are stored in the browser's local IndexedDB and are not published to GitHub. Back up months before replacing reports. All 63 Node tests passed, and desktop/mobile-width browser tests passed using simulated database storage. The Windows binary and physical phones need device-specific acceptance tests.
