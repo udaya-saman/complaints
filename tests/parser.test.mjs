@@ -61,7 +61,7 @@ test('PHSL template restores overwritten description, action and closure headers
  const m=detectHeaders(header);assert.equal(m.outlet,'C');assert.equal(m.description,'O');assert.equal(m.action,'R');assert.equal(m.closedFlag,'U');
  const a=normalizeComplaint({B:'Morris',C:'Alutgama',D:'46120',F:'Example',K:'Product Quality',O:'Actual detailed complaint',R:'Actual action',U:'Yes',V:'Morris',W:'Pending'},m,2,'2026-04');
  assert.equal(a.outlet,'Aluthgama');assert.equal(a.description,'Actual detailed complaint');assert.equal(a.action,'Actual action');assert.equal(a.status,'resolved');
- const changed=detectHeaders({...header,Q:'Something else'});assert.notEqual(changed.description,'O');assert.notEqual(changed.action,'R');
+ const changed=detectHeaders({...header,Q:'Something else'});assert.equal(changed.description,'O');assert.equal(changed.action,'R');
 });
 test('lookup and summary headers are rejected even when they mention outlet, coach and complaint type',()=>{
  assert.equal(detectHeaders({A:'Outlet',B:'Area Coach',D:'Complaint Type',F:'Complaint Channel',H:'Closure Directive By',I:'Sales Centre Closure Status',K:'Service Channel',N:'Close Complaint? (YES/NO)'}),null);

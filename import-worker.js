@@ -1,5 +1,5 @@
-import {openZip} from './zip-reader.js?v=2.5.0';
-import {detectHeaders,normalizeComplaint} from './parser-core.js?v=2.5.0';
+import {openZip} from './zip-reader.js?v=2.7.0';
+import {detectHeaders,normalizeComplaint} from './parser-core.js?v=2.7.0';
 const xmlDecode=s=>String(s??'').replace(/&(?:#x([\da-f]+)|#(\d+)|amp|lt|gt|quot|apos);/gi,(full,hex,dec)=>{
   if(hex||dec){const n=parseInt(hex||dec,hex?16:10);return Number.isFinite(n)&&n<=0x10ffff?String.fromCodePoint(n):full;}
   return ({'&amp;':'&','&lt;':'<','&gt;':'>','&quot;':'"','&apos;':"'"})[full.toLowerCase()]??full;
@@ -99,8 +99,8 @@ async function readXlsx(file,period){
   const sheets=[];for(const m of workbook.matchAll(/<sheet\b[^>]*>/g)){const tag=m[0],path=links.get(attr(tag,'r:id')),entry=zip.entries.get(path);if(entry)sheets.push({...entry,title:xmlDecode(attr(tag,'name')),hidden:!!attr(tag,'state')&&attr(tag,'state')!=='visible'});}
   if(!sheets.length)throw Error('No Excel worksheets were found.');
   const masters=sheets.filter(x=>/^master\s*sheet(?:\s*\(\d+\))?$/i.test(x.title.trim()));
-  if(masters.length>1)throw Error('Multiple Master Sheet tabs were found. Keep only the intended complaint Master Sheet and retry.');
-  const worksheets=masters.length?masters:sheets.filter(x=>!x.hidden&&!/^(data\s*sheet|summary|complaint\s*insights|closure\s*snapshot)\s*$/i.test(x.title.trim()));
+  const primaryMasters=masters.length?masters.filter(x=>!x.hidden):[];
+  const worksheets=masters.length?(primaryMasters.length?[primaryMasters[0]]:[masters[0]]):sheets.filter(x=>!x.hidden&&!/^(data\s*sheet|summary|complaint\s*insights|closure\s*snapshot)\s*$/i.test(x.title.trim()));
   const c=collector(period),ignoredSheets=sheets.filter(s=>!worksheets.includes(s)).map(s=>s.title);
   for(let i=0;i<worksheets.length;i++){
     const sheet=worksheets[i];let mapping=null;
@@ -127,7 +127,7 @@ self.onmessage=async e=>{
     const ext=String(file.name||'').toLowerCase().split('.').pop();
     if(!['xlsx','csv'].includes(ext))throw Error('Please upload an .xlsx or .csv file.');
     const result=ext==='csv'?await readCsv(file,period):await readXlsx(file,period);
-    if(!result.stats.headerSheets){throw Error('No individual complaint columns were found. This importer needs an Outlet plus Complaint Description or Complaint Type. The 5% summary workbook is a reporting reference, not a complaint register.');}
+    if(!result.stats.headerSheets){throw Error('No complaint register was found in this file. Please check that the sheet contains Outlet and Complaint information.');}
     postMessage({type:'complete',result});
   }catch(err){postMessage({type:'error',message:err instanceof Error?err.message:'The file could not be read.'});}
 };

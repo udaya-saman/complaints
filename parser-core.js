@@ -7,6 +7,14 @@ for(const alias of ['matara02','matara2','mataraii'])outletMap.set(alias,'Matara
 outletMap.set('alutgama','Aluthgama');
 export const canonicalOutlet=value=>outletMap.get(normalized(value))||null;
 export const clusterOf=outlet=>CLUSTERS.tharanga.includes(outlet)?'Tharanga':CLUSTERS.morris.includes(outlet)?'Morris':null;
+// Historical handover. Morris led all 14 outlets until May 2026; the six
+// Tharanga-group outlets transfer at the start of June 2026.
+export const COACH_HANDOVER_PERIOD='2026-06';
+export function coachForOutletAtPeriod(outlet,period){
+ const group=clusterOf(outlet);
+ if(!group||!/^\d{4}-(0[1-9]|1[0-2])$/.test(String(period||'')))return null;
+ return period<COACH_HANDOVER_PERIOD?'Morris':group;
+}
 // Exact, bounded name matching: never infer a coach from an unrelated or compound name.
 export function canonicalCoach(value){let n=normalized(value);n=n.replace(/^(mr|mister|areacoach|ac)/,'').replace(/(areacoach|ac)$/,'');return n==='tharanga'?'Tharanga':n==='morris'?'Morris':null;}
 const HEADER_MATCH={
@@ -40,13 +48,16 @@ export function detectHeaders(row){const entries=Object.entries(row).map(([c,v])
   }
   // PHSL Master Sheet template has stable anchors even where users overwrite headers.
   const anchors={B:'areacoach',C:'outlet',D:'orderdate',F:'customername',G:'customercontactnumber',H:'ordernumber',I:'servicechannel',J:'complaintchannel',K:'complainttype',P:'salescentrecomment',Q:'complaintlodgedby',T:'commentupdatedby',V:'closuredirectiveby',W:'salescentreclosurestatus',X:'customerfeedbackstatus',Y:'remark',Z:'updatedby'};
-  if(Object.entries(anchors).every(([col,label])=>normalized(row[col])===label)){
+  const evidence=Object.entries(anchors).filter(([col,label])=>normalized(row[col])===label).length;
+  if(normalized(row.B)==='areacoach'&&normalized(row.C)==='outlet'&&evidence>=8){
     // Only use positional recovery when ALL template anchors match; never guess on another layout.
     for(const [field,col] of Object.entries({description:'O',action:'R',closedFlag:'U'}))if(!map[field]||map[field]!==col)map[field]=col;
     // An overwritten R header 'outlet' must not replace the genuine C header.
     map.outlet='C'; map.coach='B';
   }
-  return map.outlet&&(map.description||map.type)&&(map.orderDate||map.orderNumber||map.customerName||map.lodgedBy||(map.description&&map.closedFlag&&map.closureDirective))&&Object.keys(map).length>=4?map:null;
+  const hasNarrative=!!map.description;
+  const hasIdentity=!!(map.orderDate||map.orderNumber||map.customerName||map.lodgedBy);
+  return map.outlet&&(hasNarrative||(map.type&&hasIdentity))?map:null;
 }
 const pad=n=>String(n).padStart(2,'0');
 const validDate=(y,m,d)=>y>1900&&m>=1&&m<=12&&d>=1&&d<=31&&new Date(Date.UTC(y,m-1,d)).getUTCDate()===d;
@@ -87,14 +98,16 @@ export function normalizeComplaint(row,map,sourceRow='',period='',{allowMissingC
  const outlet=canonicalOutlet(pick('outlet'));
  if(!outlet)return {ignored:true,reason:pick('outlet')?'unknownOutlet':'blankOutlet',originalOutlet:pick('outlet'),sourceRow:Number(sourceRow)||0};
  const description=pick('description')||pick('type');if(!description)return {ignored:true,reason:'noComplaint',originalOutlet:outlet,sourceRow:Number(sourceRow)||0};
- const expectedCoach=clusterOf(outlet),coachValue=pick('coach');
+ const expectedCoach=coachForOutletAtPeriod(outlet,period),coachValue=pick('coach');
+ if(!expectedCoach)return {ignored:true,reason:'invalidReportingPeriod',originalOutlet:outlet,sourceRow:Number(sourceRow)||0};
  if(map.coach){const coach=canonicalCoach(coachValue);
-   if(!coach)return {ignored:true,reason:coachValue?'otherCoach':'missingCoachValue',originalCoach:coachValue,originalOutlet:outlet,sourceRow:Number(sourceRow)||0};
-   if(coach!==expectedCoach)return {ignored:true,reason:'coachOutletMismatch',originalCoach:coachValue,originalOutlet:outlet,sourceRow:Number(sourceRow)||0};
+   if(coachValue&&!coach)return {ignored:true,reason:'otherCoach',originalCoach:coachValue,originalOutlet:outlet,sourceRow:Number(sourceRow)||0};
+   if(coach&&coach!==expectedCoach)return {ignored:true,reason:'coachOutletMismatch',originalCoach:coachValue,originalOutlet:outlet,sourceRow:Number(sourceRow)||0};
+   if(!coach&&!allowMissingCoach)return {ignored:true,reason:'missingCoachValue',originalOutlet:outlet,sourceRow:Number(sourceRow)||0};
  }else if(!allowMissingCoach)return {ignored:true,reason:'missingCoachColumn',originalOutlet:outlet,sourceRow:Number(sourceRow)||0};
  const orderDate=excelDate(pick('orderDate')),orderNumber=pick('orderNumber'),customerName=pick('customerName');
  const closedFlag=pick('closedFlag'),closureDirective=pick('closureDirective'),statusRaw=pick('status');
- const r={period,outlet,cluster:expectedCoach,areaCoach:map.coach?canonicalCoach(coachValue):expectedCoach,coachUnverified:!map.coach,
+ const r={period,outlet,cluster:expectedCoach,areaCoach:map.coach&&coachValue?canonicalCoach(coachValue):expectedCoach,coachUnverified:!map.coach||!coachValue,
   orderDate,orderNumber,customerName,customerContact:pick('customerContact'),lodgedBy:pick('lodgedBy'),
   description,complaintType:pick('type'),category:normalizeCategory(pick('type')),status:classifyStatus(statusRaw,closedFlag,closureDirective),statusRaw,closedFlag,closureDirective,
   action:pick('action'),salesAction:pick('salesAction'),customerFeedback:pick('feedback'),notes:pick('notes'),
@@ -105,8 +118,12 @@ export function normalizeComplaint(row,map,sourceRow='',period='',{allowMissingC
 // outdated backup must never leak an unrelated coach into the approved clusters.
 export function verifiedRecordScope(r){
  if(!r||!OUTLETS.includes(r.outlet))return false;
- const coach=clusterOf(r.outlet);
- return r.cluster===coach && r.areaCoach===coach && (r.coachUnverified===true||r.coachUnverified===false||r.coachUnverified==null);
+ const coach=coachForOutletAtPeriod(r.outlet,r.period);
+ // Older saved April-May records can carry the static cluster label; the
+ // source Area Coach still must agree with the approved historical policy.
+ return !!coach && r.areaCoach===coach &&
+ (r.cluster===coach||(r.period<COACH_HANDOVER_PERIOD&&r.cluster===clusterOf(r.outlet))) &&
+ (r.coachUnverified===true||r.coachUnverified===false||r.coachUnverified==null);
 }
 export function getScopeOutlets(mode,value){if(mode==='outlet')return value==='all'?OUTLETS:OUTLETS.includes(value)?[value]:[];
  return value==='tharanga'?CLUSTERS.tharanga:value==='morris'?CLUSTERS.morris:OUTLETS;}

@@ -98,3 +98,31 @@ export function generateDetailedPdf({rows=[],periodLabel='All saved months',scop
  });
  return doc.output();
 }
+
+export function generateComplaintPdf({record}={}){
+ if(!record || !record.outlet || !record.period)throw Error('Complaint information is missing.');
+ const r=record,doc=new PDF(595.28,841.89);
+ doc.period=r.period;doc.page('Complaint details',r.period);
+ doc.rect(36,doc.y,doc.W-72,55,LIGHT);doc.rect(36,doc.y,4,55,r.status==='resolved'?GREEN:GOLD);
+ doc.text(48,doc.y+9,`${r.outlet} / ${r.status==='resolved'?'RESOLVED':'PENDING'}`,13,{bold:true});
+ doc.text(48,doc.y+31,`Order ${r.orderNumber||'Not provided'}  |  ${r.orderDate||'Date not provided'}`,9,{color:GRAY});doc.y+=71;
+ const fields=[
+  ['Area Coach',r.areaCoach],['Outlet',r.outlet],['Order Date',r.orderDate],['Order Number',r.orderNumber],
+  ['Customer Name',r.customerName],['Customer Contact Number',r.customerContact],
+  ['Complaint Lodged By',r.lodgedBy],['Reporting Month',r.period],
+  ['Service Channel',r.serviceChannel],['Complaint Channel',r.complaintChannel],
+  ['Complaint Type (original)',r.complaintType],['Complaint Type (normalized)',r.category],
+  ['Complaint Description',r.description],['Outlet Action / Comment',r.action],
+  ['Sales Centre Action / Comment',r.salesAction],['Current Status',r.status],
+  ['Original Sales Centre Closure Status',r.statusRaw],
+  ['Close Complaint? (Yes / No)',r.closedFlag],['Closure Directive By',r.closureDirective],
+  ['Customer Feedback Status',r.customerFeedback],['Remarks',r.notes],['Product Details',r.product]
+ ];
+ for(const [label,value] of fields){
+  const lines=wrap(String(value||'Not provided'),doc.W-96,10.5);
+  doc.ensure(37);doc.text(48,doc.y,label.toUpperCase(),8.5,{bold:true,color:GRAY});doc.y+=17;
+  for(const line of lines){doc.ensure(16);doc.text(48,doc.y,line,10.5);doc.y+=16;}
+  doc.y+=12;
+ }
+ return doc.output();
+}
