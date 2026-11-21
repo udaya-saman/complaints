@@ -1,12 +1,19 @@
-# Customer Complaints Hub v2.9.0
+# Customer Complaints Hub v2.9.1
+Offline-first complaint dashboard for GitHub Pages. Customer data stays in the local device's browser.
 
-## Outlet-only import policy
-Only the approved Outlet name is used for import eligibility. Small spelling errors are matched conservatively. Unknown or ambiguous outlets remain excluded. Matara and Matara 2, or Welipenna A and B, are never silently interchanged.
+## Corrected Excel extraction
+The importer scans workbook sheets and plausible header rows rather than selecting the first "Outlet" caption. It scores the complaint-related columns and retained eligible rows, preferring the actual complaint register over summary tabs and introductory headings. A workbook with renamed columns or multiple Master Sheet variants can still be read when it contains recognizable complaint data.
 
-Area Coach is no longer an import-validation rule. The original source value is preserved as sourceAreaCoach. Reporting clusters are calculated from outlet and reporting month: Morris before June 2026 for all approved outlets; from June onward, Tharanga manages six and Morris the other eight.
+**Only approved Outlet names determine eligibility.** Area Coach is retained solely as source metadata; it never excludes a complaint. Small, unambiguous outlet-name typos can be corrected. Historical cluster membership is assigned from the outlet and reporting month (Morris covers all fourteen outlets before June 2026, then the six-outlet transfer to Tharanga takes effect).
 
-Missing complaint description, status, customer contact or other optional data does not block a row. Blank closure fields are treated as Pending.
+An empty preview cannot overwrite a saved month. Existing imported data and backups are not erased by updating the application.
 
-Older saved snapshots are normalized to outlet-only rules on display. Restore also checks outlets, not source coaches. Previously excluded source records require re-import after you back up the existing local data.
+## Verified sources and limitations
+All six supplied April–September 2026 workbooks were reprocessed with the revised extractor: 30, 20, 28, 33, 30, and 15 eligible complaint records. The 68 MB example imported 22 records. A deliberately altered June workbook with added misleading preheader rows returned 28 valid records; the previous extractor had returned only 13 from a secondary sheet. New automated tests cover misleading headers and typo-tolerant outlet recognition.
 
-Customer information is stored on the device, never in the public GitHub repository. The offline service worker precaches local application assets.
+The local automated suite passed 63/63 tests. The application also completed a Chromium UI workflow with the original workbook at desktop and mobile viewport sizes using simulated local storage. Physical-device testing and live GitHub Pages behavior have not been verified.
+
+## Updating
+Commit the entire release including `index.html`, `sw.js`, `hub-2.9.1.js`, and `workbook-2.9.1.js`; mixing versioned files can cause an old importer to load. Use Data Library > Update & repair to refresh cached application files. Do not clear site data; this can delete saved complaint records.
+
+For months affected by old import behavior, export a JSON backup, then re-import the original workbook.
