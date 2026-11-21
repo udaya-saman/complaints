@@ -1,4 +1,4 @@
-/* Customer Complaints Hub 2.9.0. Generated offline bundle. */
+/* Customer Complaints Hub 2.9.0. Rebuilt self-contained bundle. */
 (()=>{'use strict';
 const {OUTLETS,CLUSTERS,normalized,canonicalOutlet,clusterOf,COACH_HANDOVER_PERIOD,coachForOutletAtPeriod,canonicalCoach,detectHeaders,excelDate,classifyStatus,normalizeCategory,complaintIdentity,normalizeComplaint,verifiedRecordScope,getScopeOutlets,summarize,pendingAge,crossMonthDuplicates}=(()=>{
 // Pure complaint normalization, suitable for the browser worker and Node tests.
@@ -85,8 +85,8 @@ function detectHeaders(row){
   // PHSL templates sometimes contain edited O/R/U column headings. Recover
   // positions only when multiple independent anchors verify this layout.
   const anchors={B:'areacoach',C:'outlet',D:'orderdate',F:'customername',G:'customercontactnumber',H:'ordernumber',I:'servicechannel',J:'complaintchannel',K:'complainttype',P:'salescentrecomment',Q:'complaintlodgedby',T:'commentupdatedby',V:'closuredirectiveby',W:'salescentreclosurestatus',X:'customerfeedbackstatus',Y:'remark',Z:'updatedby'};
-  const evidence=Object.entries(anchors).filter(([col,label])=>normalized(row[col])===label).length;
-  if(map.outlet==='C'&&map.coach==='B'&&evidence>=5&&[row.D,row.H,row.K].filter(x=>x!=null).length>=2){
+  const evidence=Object.entries(anchors).filter(([col,label])=>col!=='B'&&normalized(row[col])===label).length;
+  if(map.outlet==='C'&&evidence>=5&&[row.D,row.H,row.K].filter(x=>x!=null).length>=2){
     for(const [field,col] of Object.entries({description:'O',action:'R',closedFlag:'U'}))if(!map[field])map[field]=col;
     map.outlet='C';
   }
