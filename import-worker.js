@@ -1,5 +1,5 @@
-import {openZip} from './zip-reader.js?v=2.9.1';
-import {detectHeaders,normalizeComplaint} from './parser-core.js?v=2.9.1';
+import {openZip} from './zip-reader.js?v=2.9.3';
+import {detectHeaders,normalizeComplaint,canonicalOutlet,normalized} from './parser-core.js?v=2.9.3';
 const xmlDecode=s=>String(s??'').replace(/&(?:#x([\da-f]+)|#(\d+)|amp|lt|gt|quot|apos);/gi,(full,hex,dec)=>{
   if(hex||dec){const n=parseInt(hex||dec,hex?16:10);return Number.isFinite(n)&&n<=0x10ffff?String.fromCodePoint(n):full;}
   return ({'&amp;':'&','&lt;':'<','&gt;':'>','&quot;':'"','&apos;':"'"})[full.toLowerCase()]??full;
@@ -127,6 +127,23 @@ function captureTableRow(candidates,row,rowNum,period,sheetTitle){
   if(Number(rowNum)>candidate.headerRow){candidate.c.add(row,candidate.map,rowNum);candidate.rows++;}
  }
 }
+// Independent rescue for PHSL-style complaint registers. Area Coach is
+// source metadata only; Outlet determines whether a row is included.
+const PHSL_COLUMNS={coach:'B',outlet:'C',orderDate:'D',customerName:'F',customerContact:'G',orderNumber:'H',service:'I',channel:'J',type:'K',product:'N',description:'O',salesAction:'P',lodgedBy:'Q',action:'R',closedFlag:'U',closureDirective:'V',status:'W',feedback:'X',notes:'Y'};
+function phslHeaderRow(row){
+ const norm=key=>normalized(row[key]);
+ if(norm('C')!=='outlet')return false;
+ const anchors=[['D','orderdate'],['F','customername'],['H','ordernumber'],['I','servicechannel'],['J','complaintchannel'],['K','complainttype'],['W','salescentreclosurestatus']];
+ return anchors.filter(([key,value])=>norm(key)===value).length>=2;
+}
+function phslDataRow(row){
+ if(!canonicalOutlet(row.C))return false;
+ const has=key=>String(row[key]??'').trim().length>0;
+ return (has('O')&&(has('D')||has('H')||has('K')))||(has('D')&&has('H'));
+}
+function complaintCoverage(rows){
+ return rows.reduce((total,r)=>total+['description','orderDate','orderNumber','customerName','customerContact','statusRaw','action'].filter(k=>String(r[k]??'').trim()).length,0);
+}
 async function readXlsx(file,period){
  postMessage({type:'progress',percent:1,label:'Finding complaint records…'});
  const zip=await openZip(file),shared=sharedValues(await zip.entryText('xl/sharedStrings.xml',120*1024*1024));
@@ -152,14 +169,28 @@ async function readXlsx(file,period){
  const errors=[];let chosen=null;
  for(let i=0;i<ordered.length;i++){
   const sheet=ordered[i],candidates=[];
+  const rescue=collector(period);rescue.sheet(PHSL_COLUMNS,sheet.title);
+  let confirmedHeader=false,rescueHints=0;
   try{
    const stream=await zip.entryStream(sheet.name);
-   await parseXmlRows(stream,shared,(row,rowNum)=>captureTableRow(candidates,row,rowNum,period,sheet.title),
-    (pct,scanned)=>postMessage({type:'progress',percent:Math.min(96,Math.floor((i+pct/100)/ordered.length*96)),label:`Checking ${sheet.title} · ${scanned.toLocaleString()} rows scanned`}),sheet.uncompressed);
+   await parseXmlRows(stream,shared,(row,rowNum)=>{
+     captureTableRow(candidates,row,rowNum,period,sheet.title);
+     if(phslHeaderRow(row)){confirmedHeader=true;return;}
+     if(Number(rowNum)<=1||!canonicalOutlet(row.C))return;
+     if(phslDataRow(row))rescueHints++;
+     rescue.add(row,PHSL_COLUMNS,rowNum);
+   },(pct,scanned)=>postMessage({type:'progress',percent:Math.min(96,Math.floor((i+pct/100)/ordered.length*96)),label:`Checking ${sheet.title} · ${scanned.toLocaleString()} rows scanned`}),sheet.uncompressed);
   }catch(e){errors.push(`${sheet.title}: ${String(e?.message||e)}`);continue;}
   const candidate=chooseCandidate(candidates);
-  if(!candidate)continue;
-  const result=candidate.result,accepted=result.records.length,quality=candidate.evidence.strength;
+  let result=candidate?.result||null,quality=candidate?.evidence.strength||0;
+  const fallback=rescue.result();
+  const rescueValid=fallback.records.length>0&&(confirmedHeader||rescueHints>=2||(master(sheet)&&rescueHints>=1));
+  if(rescueValid&&(!result||fallback.records.length>result.records.length||
+       (fallback.records.length===result.records.length&&complaintCoverage(fallback.records)>complaintCoverage(result.records)))){
+    result=fallback;quality=4;
+  }
+  if(!result)continue;
+  const accepted=result.records.length;
   if(accepted&&quality){
    if(!chosen||quality>chosen.quality||(quality===chosen.quality&&accepted>chosen.result.records.length))chosen={result,quality,sheetTitle:sheet.title};
   }else if(!chosen){chosen={result,quality,sheetTitle:sheet.title};}
