@@ -1,18 +1,10 @@
-# Customer Complaints Hub v2.9.2
+# Customer Complaints Hub v2.9.3
+A mobile-friendly, offline-first reporting application for GitHub Pages.
 
-Modern offline-first customer complaints dashboard for GitHub Pages and local Windows use.
+**June import repair:** A second extraction path now recognizes the PHSL complaint register using independently checked cell positions. It is used when the generic importer misses records. It is not dependent on the Area Coach name. Only one of the 14 approved outlets determines complaint eligibility; a near match is only accepted when unambiguous.
 
-## Important: identify the release
-The **top-right version label must display v2.9.2**. If you still see the old "No matching complaints were found for these two clusters" warning or an enabled "Save 0 complaints" button, you are running an older release. GitHub source updates do not update a previously downloaded Windows executable.
+To recover records missed in prior uploads, back up your browser data and reimport the source Excel workbook. An empty report never overwrites a saved month.
 
-For **local Windows use**, close the old Complaints Hub window and start the new v2.9.2 portable Windows launcher. It serves the new application at the same `http://localhost:8765` origin. Keep using the same browser so previously saved complaint history remains available. Do not clear browser site data.
+All six source workbooks were tested using both the native and fallback ZIP readers. The complete counts (April through September) were 30, 20, 28, 33, 30 and 15. The original June file returned 28 records. A synthetic altered June report with most headers renamed also returned 28; the old reader returned 13.
 
-For **GitHub Pages**, deploy the versioned files together, then select Data Library > Update & repair. The build does not upload any customer spreadsheets.
-
-## Excel import
-The importer searches relevant worksheets for plausible complaint tables and recognizes the real headings rather than an introductory "Outlet" caption. Only one of the 14 approved Outlet names determines whether a complaint is eligible. Minor unambiguous outlet typos are recognized. Missing or contradictory Area Coach values are never rejection criteria. Reporting clusters follow the approved June 2026 handover.
-
-The August 2026 (3) report returned 30 eligible records (25 resolved, five pending) in an isolated browser test. An empty import cannot overwrite saved data.
-
-## Privacy and testing
-Customer complaint records are stored in the browser's local IndexedDB and are not published to GitHub. Back up months before replacing reports. All 63 Node tests passed, and desktop/mobile-width browser tests passed using simulated database storage. The Windows binary and physical phones need device-specific acceptance tests.
+Use only the GitHub repository for releases. All source, versioned offline scripts and tests must be updated together. The top bar shows v2.9.3.
