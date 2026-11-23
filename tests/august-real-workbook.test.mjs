@@ -4,7 +4,7 @@ import {File} from 'node:buffer';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 test('August complaint workbook import is complete and save-zero is prohibited',async()=>{
- const src=readFileSync(new URL('../workbook-2.9.2.js',import.meta.url),'utf8');
+ const src=readFileSync(new URL('../workbook-2.9.3.js',import.meta.url),'utf8');
  assert.match(src,/function chooseCandidate/);
  const app=readFileSync(new URL('../app.js',import.meta.url),'utf8');
  assert.match(app,/!state\.preview\.records\.length/);

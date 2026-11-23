@@ -1,6 +1,6 @@
 import {readFileSync,readdirSync} from 'node:fs';import {File} from 'node:buffer';import assert from 'node:assert/strict';import vm from 'node:vm';
-const folder=process.argv[2]||'..';const expected={April:[4,450,30,22,8,0],May:[5,405,20,15,5,0],June:[6,415,28,26,2,0],July:[7,413,33,31,2,0],August:[8,485,30,25,5,0],September:[9,281,15,11,4,0]};
-const source=readFileSync(new URL('../workbook-2.9.0.js',import.meta.url),'utf8');
+const folder=process.argv[2]||'..';const expected={April:[4,450,30,22,8,0],May:[5,405,20,15,5,0],June:[6,414,28,26,2,0],July:[7,413,33,31,2,0],August:[8,485,30,25,5,0],September:[9,281,15,11,4,0]};
+const source=readFileSync(new URL('../workbook-2.9.3.js',import.meta.url),'utf8');
 for(const [month,[m,sourceCount,total,resolved,pending,mismatch]] of Object.entries(expected)){
  const files=readdirSync(folder).filter(x=>x.startsWith('PHSL Customer Complaint Report')&&x.includes(`${month} 2026`)&&x.endsWith('.xlsx'));assert.equal(files.length,1,month);
  let result,error;const ctx=vm.createContext({Blob,TextDecoder,TextEncoder,ReadableStream,DecompressionStream,Date,setTimeout,clearTimeout,console,postMessage:x=>{if(x.type==='error')error=x.message;if(x.type==='complete')result=x.result;}});ctx.self=ctx;new vm.Script(source).runInContext(ctx);

@@ -10,16 +10,16 @@ test('every offline precache entry exists and app versions agree',()=>{
  assert.ok(match,'Service worker precache list missing');
  const assets=[...match[1].matchAll(/'([^']+)'/g)].map(m=>m[1]);
  for(const asset of assets){assert.ok(asset.startsWith('./'));assert.ok(existsSync(resolve(root,asset.split('?')[0]))||asset==='./',`Missing offline resource: ${asset}`);}
- assert.match(worker,/ph-complaints-v2\.9\.2/);
- assert.match(read('package.json'),/"version":"2\.9\.2"/);
- assert.match(read('index.html'),/VERSION 2\.9\.2/);
- assert.match(read('app.js'),/const VERSION='2\.9\.2'/);
+ assert.match(worker,/ph-complaints-v2\.9\.3/);
+ assert.match(read('package.json'),/"version":"2\.9\.3"/);
+ assert.match(read('index.html'),/VERSION 2\.9\.3/);
+ assert.match(read('app.js'),/const VERSION='2\.9\.3'/);
 });
 test('GitHub Pages navigation, PWA and file upload use subpath-local assets',()=>{
  const html=read('index.html'),manifest=JSON.parse(read('manifest.webmanifest'));
  assert.equal(manifest.scope,'./');assert.equal(manifest.start_url,'./#/overview');
- assert.match(html,/href="\.\/styles-2\.9\.2\.css"/);assert.match(html,/src="\.\/hub-2\.9\.2\.js"/);
+ assert.match(html,/href="\.\/styles-2\.9\.3\.css"/);assert.match(html,/src="\.\/hub-2\.9\.3\.js"/);
  assert.match(html,/worker-src 'self'/);assert.match(html,/base-uri 'none'/);
- assert.match(read('app.js'),/new Worker\('\.\/workbook-2\.9\.2\.js'/);
+ assert.match(read('app.js'),/new Worker\('\.\/workbook-2\.9\.3\.js'/);
  assert.ok(existsSync(resolve(root,'.nojekyll')));
 });
